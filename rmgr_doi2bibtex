@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Get the BibTeX entry for a DOI number.
+
+PrintUsage() {
+    cat 1>&2 << EOF
+Usage: $(basename $0) <doi>
+
+Query the crossref API to get the BibTeX entry corresponding to the given DOI.
+EOF
+}
+
+##### MAIN #####
+
+source rmgr_setupenv
+
+doi="$1"
+[ -z "$doi" ] && PrintUsage && exit 1
+
+curl -s "http://api.crossref.org/works/$doi/transform/application/x-bibtex"

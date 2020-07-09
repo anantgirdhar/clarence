@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Add a file corresponding to a database entry
+
+PrintUsage() {
+    cat 1>&2 << EOF
+Usage: $(basename $0) <bibkey> <file> <options>
+
+Copy the file corresponding to a BibTeX entry into the appropriate directory.
+
+Options:
+  -d : delete the original file after copying
+EOF
+}
+
+##### MAIN #####
+
+source rmgr_setupenv
+
+key="$1"
+[ -z "$key" ] && PrintUsage && exit 1
+file="$2"
+[ -z "$file" ] && PrintUsage && exit 1
+[ "$3" = "-d" ] && delete="yes" || delete="no"
+
+rmgr_searchkey "$key" && echo "Key not found." && exit 1
+
+case $(rmgr_extracttype "$key") in
+    "article") dest="$ARTICLES" ;;
+    "book") dest="$BOOKS" ;;
+    *"thesis"*) dest="$THESES" ;;
+    *) dest="$ARTICLES" ;;
+esac
+if [ ! -d "$dest" ]; then
+    mkdir -p "$dest"
+    [ "$?" -ne 0 ] && echo "Error creating $dest." && exit 11
+fi
+
+newFilename=$(echo "$key" | tr '-' '_')
+extension=${file##*.}
+dest="$dest/$newFilename.$extension"
+[ -f "$dest" ] &&\
+    read -p "Destination ($dest) already exists. Still copy? [y|N]: " confirmation ||\
+    confirmation="y"
+[ "$confirmation" = "y" ] && cp -f "$file" "$dest"
+[ "$delete" = "yes" ] && rm "$file"
+
+# Update the appropriate db fields
+rmgr_updval "$key" "date_updated" $(date "+%Y-%m-%d %H:%M:%S %Z %:::z")
+rmgr_updval "$key" "read_status" "unread"
+rmgr_updval "$key" "reading_folder"

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Extract the type of a particular key
+
+key="$1"
+[ -z "$key" ] && exit 1
+
+searchResults=$(rmgr_searchkey "$key")
+[ $(echo "$searchResults" | wc -l) -ne 1 ] && exit 2
+
+echo "$searchResults" | grep -E '^@.+{.*,' | cut -d '{' -f 1 | cut -d '@' -f 2 | sed 's/^\s*//' | sed 's/\s*$//'

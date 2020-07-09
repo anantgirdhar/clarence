@@ -1,0 +1,50 @@
+#!/bin/sh
+
+# Add an entry to the database
+# Assumes that all the data has been cleaned.
+
+PrintUsage() {
+    cat 1>&2 << EOF
+Usage: $(basename $0) <bibtex>
+
+Take a BibTeX entry and add it to the database.
+EOF
+}
+
+CreateBibEntry() {
+    record="$1"
+    [ -s "$BIB" ] && echo >> "$BIB"
+    echo "$record" >> "$BIB"
+}
+
+CreateExtEntry() {
+    key="$1"
+    [ -s "$EXT" ] && echo >> "$EXT"
+    cat >> "$EXT" << EOF
+- $key:
+  - last_access:
+  - date_added: $(date "+%Y-%m-%d %H:%M:%S %Z %:::z")
+  - date_updated:
+  - read_status:
+  - tags:
+  - projects:
+  - reading_folder:
+  - category:
+EOF
+}
+
+##### MAIN #####
+
+source rmgr_setupenv
+
+record="$1"
+[ -z "$record" ] && PrintUsage && exit 1
+key=$(rmgr_extractkey "$record")
+
+[ ! -z $(rmgr_searchkey "$key") ] && echo "$key already exists in $BIB" && exit 2
+
+CreateBibEntry "$record"
+CreateExtEntry "$key"
+rmgr_updlist "$key" tags
+rmgr_updlist "$key" projects
+rmgr_updval "$key" category
