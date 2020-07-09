@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Update the tags for a record
+
+PrintUsage() {
+    cat 1>&2 << EOF
+Usage: $(basename $0) <key>
+
+Update the tags for an entry.
+EOF
+}
+
+##### MAIN #####
+
+source rmgr_setupenv
+
+key="$1"
+[ -z "$key" ] && PrintUsage && exit 1
+
+source rmgr_updlist "$key" tags

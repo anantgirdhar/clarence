@@ -1,0 +1,96 @@
+#!/bin/sh
+
+# Clean the BibTeX record
+
+PrintUsage() {
+    cat 1>&2 << EOF
+Usage: $(basename $0) <bibtex>
+
+Accept a BibTeX entry, clean it (with an option for manual editing), and echo
+the cleaned BibTeX entry on stdout. All prompts are printed on stderr so that
+stdout can be read for the output.
+
+The following cleaning steps are performed:
+- Sets the key to Lf-Y where:
+    - f is the first author's first initial
+    - L is the first author's last name
+    - Y is the year of publication
+- Ensures the key is lowercase
+- Ensures that the key is unique in the database
+EOF
+}
+
+FormatKey() {
+    record="$1"
+    # Set the key to fllll-yyyy
+    # Extract author and year
+    author=$(echo "$record" |\
+        grep '^\s*author' |\
+        cut -d '{' -f 2 |\
+        cut -d '}' -f 1 |\
+        awk -F ' and ' '{print $1}' \
+    )
+    firstInitial=$(echo "$author" | cut -b 1)
+    lastName=$(echo "$author" | rev | cut -d ' ' -f 1 | rev)
+    year=$(echo "$record" |\
+        grep '^\s*year ' |\
+        cut -d '=' -f 2 |\
+        cut -d '{' -f 2 |\
+        cut -d '}' -f 1 |\
+        sed -E 's/^\s+//' |\
+        cut -d ',' -f 1 |\
+        sed -E 's/\s+$//' \
+    )
+    newkey="$lastName""$firstInitial"-"$year"
+    key=$(echo "$record" | rmgr_extractkey)
+    echo "$record" | sed "s/$key/$newkey/"
+}
+
+FormatRecord() {
+    record=$(FormatKey "$1")
+    # Make sure everything in the first line is lowercase
+    echo "$record" | head -n 1 | tr '[:upper:]' '[:lower:]' | tr '_' '-'
+    # Make every line start with two spaces
+    echo "$record" | tail -n +2 | sed -E 's/^\s+/  /'
+}
+
+##### MAIN #####
+
+record="$1"
+[ -z "$record" ] && PrintUsage && exit 1
+
+record=$(FormatRecord "$record")
+
+# Verify and confirm record
+while true; do
+    # Verify that the key is unique
+    key=$(rmgr_extractkey "$record")
+    while true; do
+        searchResults=$(rmgr_searchkey "$key")
+        exitCode="$?"
+        [ "$exitCode" -ne 0 ] && [ ! -z "$searchResults" ] && echo "$searchResults" && exit "$exitCode"
+        [ -z "$searchResults" ] && break
+        echo "Some bib entries already exist:" >&2
+        echo "- $searchResults" >&2
+        echo >&2
+        read -p 'Enter new key: ' newkey >&2
+        [ -z "$newkey" ] && newkey="$key"
+        record=$(echo "$record" | sed -E "s/$key/$newkey/")
+        key="$newkey"
+        echo >&2
+    done
+    # Confirm with the user that the record is correct
+    echo "$record" >&2
+    read -p "Does this look correct? [y|n|e]: " confirmation >&2
+    [ "$confirmation" = 'y' ] && break
+    [ "$confirmation" = 'n' ] && exit 10
+    if [ "$confirmation" = 'e' ]; then
+        # Allow user to manually edit
+        tmpbuf=$(mktemp --tmpdir=/tmp/ rmgr_manualedit_XXXXXX)
+        echo "$record" > "$tmpbuf"
+        $EDITOR "$tmpbuf"
+        record=$(cat "$tmpbuf")
+    fi
+done
+
+FormatRecord "$record"

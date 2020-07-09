@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Extract the key from a bibtex entry
+
+# Read record from pipe (stdin) or argument
+if (( $# == 0 )); then
+    record=$(</dev/stdin)
+else
+    record="$1"
+fi
+[ -z "$record" ] && exit 1
+
+echo "$record" | grep -E '^@.+{.*,' | sed -E 's/^@.+\{\s*//' | sed -E 's/\s*,.*//'

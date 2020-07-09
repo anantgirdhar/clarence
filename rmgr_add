@@ -1,0 +1,65 @@
+#!/bin/sh
+
+# Add a file to the database (with unknown database entry)
+
+PrintUsage() {
+    cat 1>&2 << EOF
+Usage: $(basename $0) <file> <options>
+
+Add a file to the database regardless of whether or not a record for it already
+exists in the database. This script helps to add the correct bibliographic
+information.
+
+Options:
+  -d : delete the original file after copying
+EOF
+}
+
+ManualIntervention() {
+    read -p "Autodetect failed. Search: " searchTerms
+    rmgr_querycrossref "$searchTerms"
+}
+
+##### MAIN #####
+
+source rmgr_setupenv
+
+file="$1"
+[ ! -f "$file" ] && PrintUsage && exit 1
+shift
+options="$@"
+
+# Open the reader so the user can confirm
+$READER "$file" &
+previewPID="$!"
+
+EndSafely() {
+    kill "$previewPID"
+    [ -z "$1" ] && exit -1 || exit "$1"
+}
+
+trap "EndSafely" SIGINT
+
+# Try to infer DOI
+doi=$(rmgr_inferdoi "$file")
+[ -z "$doi" ] && doi=$(ManualIntervention)
+
+bibtex=$(rmgr_doi2bibtex "$doi")
+
+# Format the bibtex entry
+bibtex=$(rmgr_cleanbib "$bibtex")
+
+# Add the entry
+rmgr_addentry "$bibtex"
+exitCode="$?"
+[ "$exitCode" -ne 0 ] && EndSafely "$?"
+echo "Added entry" >&2
+
+# Add the file
+bibkey=$(rmgr_extractkey "$bibtex")
+rmgr_addfile "$bibkey" "$file" "$options"
+exitCode="$?"
+[ "$exitCode" -ne 0 ] && EndSafely "$?"
+echo "Added file" >&2
+
+EndSafely 0
