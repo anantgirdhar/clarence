@@ -144,10 +144,11 @@ while true; do
         "y") break ;;
         "q") exit 10 ;;
         "e")
-            [ ! -f "$tmpbufbib" ] && tmpbuf=$(mktemp --tmpdir=/tmp/ rmgr_bib_XXXXXX)
+            [ ! -f "$tmpbufbib" ] && tmpbufbib=$(mktemp --tmpdir=/tmp/ rmgr_bib_XXXXXX)
             echo "$bibtex" > "$tmpbufbib"
             $EDITOR "$tmpbufbib"
             bibtex=$(cat "$tmpbufbib")
+            key=$(bib2key "$bibtex")
             # If we just edited and the key is unique, then we don't have to
             # edit again. If we are presented with the prompt, then it's just
             # annoying.
@@ -166,3 +167,4 @@ echo "$bibtex" >> "$BIB"
 # Finally leave the updated bibtex on stdout
 exec 1<&9
 echo "$bibtex"
+exit 0
