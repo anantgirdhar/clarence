@@ -4,11 +4,11 @@
 
 PrintUsage() {
     cat << EOF
-Usage: $(basename $0) [<options>] <file>
+Usage: $(basename $0) [<options>] <file> [<file2> ...]
 
 Add a file to the database regardless of whether or not a record for it already
 exists in the database. This script helps to add the correct bibliographic
-information.
+information. To add multiple files, pass all of them to the script.
 
 Options:
   -d : delete the original file after copying
@@ -28,47 +28,57 @@ else
     options=""
 fi
 
-file="$1"
-[ ! -f "$file" ] && PrintUsage && exit 1
+[ ! -f "$1" ] && PrintUsage && exit 1
 
-# Open the reader so the user can confirm
-$READER "$file" &
-previewPID="$!"
+for file in "$@"; do
+    echo "$file"
+    # Kill the previous previewPID if it's still open
+    [ ! -z "$previewPID" ] && kill "$previewPID"
+    # Open the reader so the user can confirm
+    $READER "$file" &
+    previewPID="$!"
 
-EndSafely() {
-    kill "$previewPID"
-    [ -z "$1" ] && exit 100 || exit "$1"
-}
+    EndSafely() {
+        kill "$previewPID"
+        [ -z "$1" ] && exit 100 || exit "$1"
+    }
 
-trap "EndSafely" SIGINT
+    trap "EndSafely" SIGINT
 
-# Try to infer DOI
-doi=$(pdf2doi "$file")
-[ -z "$doi" ] &&\
-    read -p 'Autodetect failed. Search: ' searchTerms &&\
-    doi=$(querycr "$searchTerms")
+    # Try to infer DOI
+    doi=$(pdf2doi "$file")
+    [ $? -eq 1 ] && EndSafely 1
+    if [ -z "$doi" ]; then
+        read -p 'Autodetect failed. Search: ' searchTerms
+        doi=$(querycr "$searchTerms") || EndSafely "$?"
+    fi
 
-bibtex=$(doi2bib "$doi") || EndSafely "$?"
+    bibtex=$(doi2bib "$doi") || EndSafely "$?"
 
-# Set the key based on some predefined format
-bibtex=$(rmgr_formatkey "$bibtex") || EndSafely "$?"
+    # Set the key based on some predefined format
+    bibtex=$(rmgr_formatkey "$bibtex") || EndSafely "$?"
 
-# Add the entry
-rmgr_addentry "$bibtex"
-if [ $? = 50 ]; then
-    echo "Entry addition skipped."
-else
-    EndSafely "$?"
-    echo "Added entry."
-fi
+    # Add the entry
+    bibtex=$(rmgr_addentry "$bibtex")
+    exitCode=$?
+    if [ $exitCode = 50 ]; then
+        echo "Entry addition skipped."
+    elif [ $exitCode = 0 ] && [ ! -z "$bibtex" ]; then
+        echo "Added entry."
+    else
+        EndSafely "$exitCode"
+    fi
 
-# Add the file
-key=$(bib2key "$bibtex")
-if [ -z "$options" ]; then
-    rmgr_addfile "$key" "$file" || EndSafely "$?"
-else
-    rmgr_addfile "$options" "$key" "$file" || EndSafely "$?"
-fi
-echo "Added file."
+    # Add the file
+    key=$(bib2key "$bibtex")
+    if [ -z "$options" ]; then
+        rmgr_addfile "$key" "$file" || EndSafely "$?"
+    else
+        rmgr_addfile "$options" "$key" "$file" || EndSafely "$?"
+    fi
+    echo "Added file."
 
+done
+
+# Kill the last previewPID
 EndSafely 0
