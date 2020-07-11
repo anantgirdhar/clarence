@@ -3,8 +3,8 @@
 # Add a file to the database (with unknown database entry)
 
 PrintUsage() {
-    cat 1>&2 << EOF
-Usage: $(basename $0) <file> <options>
+    cat << EOF
+Usage: $(basename $0) [<options>] <file>
 
 Add a file to the database regardless of whether or not a record for it already
 exists in the database. This script helps to add the correct bibliographic
@@ -15,19 +15,21 @@ Options:
 EOF
 }
 
-ManualIntervention() {
-    read -p "Autodetect failed. Search: " searchTerms
-    rmgr_querycrossref "$searchTerms"
-}
-
 ##### MAIN #####
 
 source rmgr_setupenv
 
+# [ "$1" = "-d" ] && { options="-d" ; shift } || options=""
+
+if [ "$1" = '-d' ]; then
+    options='-d'
+    shift
+else
+    options=""
+fi
+
 file="$1"
 [ ! -f "$file" ] && PrintUsage && exit 1
-shift
-options="$@"
 
 # Open the reader so the user can confirm
 $READER "$file" &
@@ -35,31 +37,38 @@ previewPID="$!"
 
 EndSafely() {
     kill "$previewPID"
-    [ -z "$1" ] && exit -1 || exit "$1"
+    [ -z "$1" ] && exit 100 || exit "$1"
 }
 
 trap "EndSafely" SIGINT
 
 # Try to infer DOI
-doi=$(rmgr_inferdoi "$file")
-[ -z "$doi" ] && doi=$(ManualIntervention)
+doi=$(pdf2doi "$file")
+[ -z "$doi" ] &&\
+    read -p 'Autodetect failed. Search: ' searchTerms &&\
+    doi=$(querycr "$searchTerms")
 
-bibtex=$(rmgr_doi2bibtex "$doi")
+bibtex=$(doi2bib "$doi") || EndSafely "$?"
 
-# Format the bibtex entry
-bibtex=$(rmgr_cleanbib "$bibtex")
+# Set the key based on some predefined format
+bibtex=$(rmgr_formatkey "$bibtex") || EndSafely "$?"
 
 # Add the entry
 rmgr_addentry "$bibtex"
-exitCode="$?"
-[ "$exitCode" -ne 0 ] && EndSafely "$?"
-echo "Added entry" >&2
+if [ $? = 50 ]; then
+    echo "Entry addition skipped."
+else
+    EndSafely "$?"
+    echo "Added entry."
+fi
 
 # Add the file
-bibkey=$(rmgr_extractkey "$bibtex")
-rmgr_addfile "$bibkey" "$file" "$options"
-exitCode="$?"
-[ "$exitCode" -ne 0 ] && EndSafely "$?"
-echo "Added file" >&2
+key=$(bib2key "$bibtex")
+if [ -z "$options" ]; then
+    rmgr_addfile "$key" "$file" || EndSafely "$?"
+else
+    rmgr_addfile "$options" "$key" "$file" || EndSafely "$?"
+fi
+echo "Added file."
 
 EndSafely 0

@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# Format the key accoring to the settings
+
+PrintUsage() {
+    cat << EOF
+Usage: $(basename $0) <bibtex>
+
+Format the BibTeX key according to the data in the entry and the settings. The
+BibTeX entry can be piped in but command line arguments take precedence.
+EOF
+}
+
+GetAuthor() {
+    # Get the author from the bibtex
+    grep '^\s*author' <<< "$1" |\
+        cut -d '{' -f 2 |\
+        cut -d '}' -f 1 |\
+        awk -F ' and ' '{ print $1 }'
+}
+
+GetFirstInitial() {
+    # Get the author's first initial from the name
+    echo "$1" | cut -b 1
+}
+
+GetLastName() {
+    # Get the author's last name from the full name
+    echo "$1" | rev | cut -d ' ' -f 1 | rev
+}
+
+GetYear() {
+    # Get the year from the bibtex
+    grep '^\s*year ' <<< "$1" |\
+        cut -d '=' -f 2 |\
+        cut -d '{' -f 2 |\
+        cut -d '}' -f 1 |\
+        sed -E 's/^\s+//' |\
+        cut -d ',' -f 1 |\
+        sed -E 's/\s+$//'
+}
+
+##### MAIN #####
+
+bibtex="$1"
+if [ -z "$bibtex" ]; then
+    [ ! -t 0 ] && bibtex=$(</dev/stdin)
+    [ -z "$bibtex" ] && PrintUsage && exit 1
+fi
+
+# Set the key to Lf-Y
+# - f: first initial
+# - L: full last name
+# - Y: year
+
+author=$(GetAuthor "$bibtex")
+firstInitial=$(GetFirstInitial "$author")
+lastName=$(GetLastName "$author")
+year=$(GetYear "$bibtex")
+newkey=$(echo "$lastName""$firstInitial"-"$year" | tr '[:upper:]' '[:lower:]')
+key=$(echo "$bibtex" | bib2key)
+sed "s/$key/$newkey/" <<< "$bibtex"

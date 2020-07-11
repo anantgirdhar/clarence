@@ -3,11 +3,10 @@
 # Update a specific dict value for a key
 
 PrintUsage() {
-    cat 1>&2 << EOF
-Usage: $(basename $0) <bibkey> <datakey> [<val>]
+    cat << EOF
+Usage: $(basename $0) <bibkey> <datakey> <val>
 
-Update a specific datakey value for a specific bibkey. If val is not provided,
-it is asked for interactively.
+Update a specific datakey value for a specific bibkey.
 EOF
 }
 
@@ -20,33 +19,23 @@ key="$1"
 datakey="$2"
 [ -z "$datakey" ] && PrintUsage && exit 1
 val="$3"
+[ -z "$val" ] && PrintUsage && exit 1
 
 # Verify that the record exists
-searchResults=$(rmgr_searchkey "$key")
-[ -z "$searchResults" ] && echo "Key doesn't exist." && exit 2
+searchResults=$(rmgr_lookupkey "$key")
+case $? in
+    0) ;;
+    1) echo "Key $key not found." && exit 1 ;;
+    2)
+        echo "Multiple keys found matching $key:"
+        rmgr_key2bib "$key"
+        exit 2
+        ;;
+    *) echo "Unknown exit code recieved from rmgr_lookupkey." && exit 70
+esac
 
-# Print the current datakey value
-currentVal=$(sed -n "/^- $key:/,/^- / p" "$EXT" | grep "^  - $datakey:" | sed 's/^  - //')
-[ -z "$currentVal" ] && echo "Datakey ($datakey) not found." && exit 3
-echo "Current value for $currentVal"
-echo
+# Check if the key exists
+searchResults=$(sed -n "/^- $key:/,/^- / p" "$EXT" | grep "^  - $datakey:")
+[ -z "$searchResults" ] && echo "Datakey $datakey not found." && exit 3
 
-# Get the new value
-[ -z "$val" ] && read -p "New value: " val
-
-# Create a temp file for atomic editing
-tmpfile=$(mktemp --tmpdir=/tmp/ rmgr_updlist_XXXXXX)
-
-# Write everything before the current key
-sed -n "0,/^- $key:/ p" "$EXT" | head -n -1 > $tmpfile
-# Write everything until the current key's datakey (excluding the datakey)
-sed -n "/^- $key:/,/^  - $datakey:/ p" "$EXT" | head -n -1 >> $tmpfile
-echo "  - $datakey: $val" >> $tmpfile
-# Write the rest of the current record
-sed -n "/^- $key/,/^- / p" "$EXT" | sed "/^- $key/,/^  - $datakey:/ d" | sed -nE "/^\s{0,2}- /,$ p" >> $tmpfile
-# Get the key after the current key
-nextKey=$(sed -n "/^- $key:/,/^- / p" "$EXT" | tail -n 1 | grep '^- ' | sed 's/^- //')
-[ ! -z "$nextKey" ] && sed -n "/^- $nextKey/,$ p" "$EXT" | tail -n +2 >> $tmpfile
-
-# Overwrite the db with the tmpfile
-mv "$tmpfile" "$EXT"
+sed -i "/^- $key/,/^- / s/$datakey:.*$/$datakey: $val/" "$EXT"

@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# Clean the BibTeX record
+# Manually edit the BibTeX record
 
 PrintUsage() {
-    cat 1>&2 << EOF
+    cat << EOF
 Usage: $(basename $0) <bibtex>
 
 Accept a BibTeX entry, clean it (with an option for manual editing), and echo

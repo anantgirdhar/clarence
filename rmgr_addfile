@@ -3,8 +3,8 @@
 # Add a file corresponding to a database entry
 
 PrintUsage() {
-    cat 1>&2 << EOF
-Usage: $(basename $0) <bibkey> <file> <options>
+    cat << EOF
+Usage: $(basename $0) [<options>] <bibkey> <file>
 
 Copy the file corresponding to a BibTeX entry into the appropriate directory.
 
@@ -17,35 +17,66 @@ EOF
 
 source rmgr_setupenv
 
+if [ "$1" = "-d" ]; then
+    delete="yes"
+    shift
+else
+    delete="no"
+fi
+
 key="$1"
 [ -z "$key" ] && PrintUsage && exit 1
 file="$2"
-[ -z "$file" ] && PrintUsage && exit 1
-[ "$3" = "-d" ] && delete="yes" || delete="no"
+[ ! -f "$file" ] && PrintUsage && exit 1
 
-rmgr_searchkey "$key" && echo "Key not found." && exit 1
+searchResults=$(rmgr_lookupkey "$key")
+case $? in
+    0) ;;
+    1) echo "Key $key not found." && exit 1 ;;
+    2)
+        echo "Multiple keys found matching $key:"
+        rmgr_key2bib "$key"
+        exit 2
+        ;;
+    *) echo "Unknown exit code received from rmgr_lookupkey." && exit 70
+esac
 
-case $(rmgr_extracttype "$key") in
+case $(rmgr_key2bib "$key" | bib2type) in
     "article") dest="$ARTICLES" ;;
     "book") dest="$BOOKS" ;;
     *"thesis"*) dest="$THESES" ;;
-    *) dest="$ARTICLES" ;;
+    *) echo No destination set for type $(rmgr_extracttype "$key"). && exit
 esac
 if [ ! -d "$dest" ]; then
-    mkdir -p "$dest"
-    [ "$?" -ne 0 ] && echo "Error creating $dest." && exit 11
+    if  ! mkdir -p "$dest"; then
+        echo "Error creating $dest."
+        exit 11
+    fi
 fi
 
 newFilename=$(echo "$key" | tr '-' '_')
 extension=${file##*.}
 dest="$dest/$newFilename.$extension"
-[ -f "$dest" ] &&\
-    read -p "Destination ($dest) already exists. Still copy? [y|N]: " confirmation ||\
+if [ -f "$dest" ]; then
+    while true; do
+        read -p "Destination ($dest) already exists. Still copy? [y|q]: " confirmation
+        case "$confirmation" in
+            "y") break ;;
+            "q") exit 12 ;;
+        esac
+    done
+else
     confirmation="y"
+fi
 [ "$confirmation" = "y" ] && cp -f "$file" "$dest"
-[ "$delete" = "yes" ] && rm "$file"
+
+read -p 'Enter reading folder (or leave empty): ' readingFolder
 
 # Update the appropriate db fields
 rmgr_updval "$key" "date_updated" $(date "+%Y-%m-%d %H:%M:%S %Z %:::z")
 rmgr_updval "$key" "read_status" "unread"
-rmgr_updval "$key" "reading_folder"
+[ ! -z "$readingFolder" ] && rmgr_updval "$key" "reading_folder" "$readingFolder"
+
+[ "$delete" = "yes" ] && rm "$file"
+
+exit 0

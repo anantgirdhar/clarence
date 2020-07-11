@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# Return all keys starting with a string.
+
+PrintUsage() {
+    cat << EOF
+Usage: $(basename $0) <key>
+
+Take a key or prefix and do a database lookup. Return all keys that match.
+
+The key can be provided as an argument or via stdin. Command line arguments
+take precedence over data piped in.
+
+Exit Codes:
+- 0 : success
+- 1 : key not found
+- 2 : key found multiple times
+EOF
+}
+
+source rmgr_setupenv
+
+key="$1"
+if [ -z "$key" ]; then
+    [ ! -t 0 ] && key=$(</dev/stdin)
+    [ -z "$key" ] && PrintUsage && exit 1
+fi
+
+matchedKeys=$(grep -E "^@.+{\s*$key\s*," "$BIB" |\
+    sed -E 's/^@.+\{\s*//' |\
+    sed -E 's/(.+)\s*,/\1/' \
+)
+[ -z "$matchedKeys" ] && exit 1
+numKeys=$(echo "$matchedKeys" | wc -l)
+echo "$matchedKeys"
+[ $numKeys -gt 1 ] && exit 2
+exit 0
