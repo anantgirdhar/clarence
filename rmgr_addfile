@@ -69,15 +69,16 @@ if [ -f "$dest" ]; then
 else
     confirmation="y"
 fi
-[ "$confirmation" = "y" ] && cp -f "$file" "$dest"
 
-read -p 'Enter reading folder (or leave empty): ' readingFolder
-
-# Update the appropriate db fields
-rmgr_updval "$key" "date_updated" $(date "+%Y-%m-%d %H:%M:%S %Z %:::z")
-rmgr_updval "$key" "read_status" "unread"
-[ ! -z "$readingFolder" ] && rmgr_updval "$key" "reading_folder" "$readingFolder"
-
-[ "$delete" = "yes" ] && rm "$file"
+if [ "$confirmation" = "y" ]; then
+    read -p 'Enter reading folder (or leave empty): ' readingFolder
+    # Copy the file
+    cp -f "$file" "$dest"
+    # Update the appropriate db fields
+    rmgr_updval "$key" "date_updated" "$(date "+%Y-%m-%d %H:%M:%S %Z %:::z")"
+    rmgr_updval "$key" "read_status" "unread"
+    [ ! -z "$readingFolder" ] && rmgr_updval "$key" "reading_folder" "$readingFolder"
+    [ "$delete" = "yes" ] && rm "$file"
+fi
 
 exit 0
