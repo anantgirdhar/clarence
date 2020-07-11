@@ -45,7 +45,7 @@ case $(rmgr_key2bib "$key" | bib2type) in
     "article") dest="$ARTICLES" ;;
     "book") dest="$BOOKS" ;;
     *"thesis"*) dest="$THESES" ;;
-    *) echo No destination set for type $(rmgr_extracttype "$key"). && exit
+    *) echo No destination set for type $(rmgr_key2bib "$key" | bib2type). && exit 80
 esac
 if [ ! -d "$dest" ]; then
     if  ! mkdir -p "$dest"; then
