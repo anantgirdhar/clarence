@@ -5,6 +5,7 @@ RMGR_ROOT="$XDG_DATA_HOME/rmgr"
 DOCS_ROOT="$RMGR_ROOT/docs"
 ARTICLES="$DOCS_ROOT/articles"
 BOOKS="$DOCS_ROOT/books"
+TECHREPORTS="$DOCS_ROOT/techreports"
 THESES="$DOCS_ROOT/theses"
 
 # Notes config

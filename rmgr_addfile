@@ -45,6 +45,7 @@ case $(rmgr_key2bib "$key" | bib2type) in
     "article") dest="$ARTICLES" ;;
     "inproceedings") dest="$ARTICLES" ;;
     "book") dest="$BOOKS" ;;
+    "techreport") dest="$TECHREPORTS" ;;
     "phdthesis") dest="$THESES" ;;
     *) echo No destination set for type $(rmgr_key2bib "$key" | bib2type). && exit 80
 esac
