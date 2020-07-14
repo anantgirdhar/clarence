@@ -1,24 +1,18 @@
 #!/bin/sh
 
 # Document config
-RMGR_ROOT="/media/anantg/schonbrunn/reading"
-ARTICLES="$RMGR_ROOT/articles"
-BOOKS="$RMGR_ROOT/books"
-THESES="$RMGR_ROOT/theses"
+RMGR_ROOT="$XDG_DATA_HOME/rmgr"
+DOCS_ROOT="$RMGR_ROOT/docs"
+ARTICLES="$DOCS_ROOT/articles"
+BOOKS="$DOCS_ROOT/books"
+TECHREPORTS="$DOCS_ROOT/techreports"
+THESES="$DOCS_ROOT/theses"
 
 # Notes config
-NOTES="/home/anantg/dev/rfdg/lit"
+NOTES="$XDG_DATA_HOME/rmgr/notes"
 TEMPLATES="$NOTES/templates"
 EXTENSION="md"
 
 # Database files
-BIB="$NOTES/reflist2.bib"
+BIB="$NOTES/reflist.bib"
 EXT="$NOTES/ext.yaml"
-
-# Key format
-# Example: "%a1f%a1L-%Y"
-# Use the following codes for the key:
-# - a1f: Author 1's first initial
-# - a1L: Author 1's last name
-# - Y  : Year
-# KEY_FORMAT="%a1f%a1L-%Y"

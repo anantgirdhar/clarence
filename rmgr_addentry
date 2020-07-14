@@ -4,47 +4,167 @@
 # Assumes that all the data has been cleaned.
 
 PrintUsage() {
-    cat 1>&2 << EOF
+    cat << EOF
 Usage: $(basename $0) <bibtex>
 
 Take a BibTeX entry and add it to the database.
+
+The BibTeX entry can be provided as an argument or via stdin. Command line
+arguments take precedence over data piped in.
 EOF
+}
+
+CheckKeyExists() {
+    key="$1"
+    searchResults=$(rmgr_key2bib "$key")
+    if [ ! -z "$searchResults" ]; then
+        echo
+        echo "$key already exists in the database."
+        echo "The following keys are similar:"
+        echo "$searchResults"
+        return 0
+    else
+        return 1
+    fi
 }
 
 CreateBibEntry() {
-    record="$1"
+    bibtex="$1"
+    # If the file already has information in it, input a newline to separate
+    # the record from the previous record.
     [ -s "$BIB" ] && echo >> "$BIB"
-    echo "$record" >> "$BIB"
+    echo "$bibtex" >> "$BIB"
+}
+
+CatDefaultExtEntry() {
+    tmpbufext="$1"
+    bibtex="$2"
+    key=$(bib2key "$bibtex")
+    cat > "$tmpbufext" << EOF
+# Don't change the formatting of this document or change any details in the
+# BibTeX record. Just change the values in the YAML section according to the
+# rules listed here:
+# - tags: list
+# - projects: list
+# - reading folder: string without spaces
+# - category: string without spaces
+# Any data after a hash on any line will be ignored.
+
+$bibtex
+
+RMGR_START
+- $key:
+  - last_access: # don't edit this
+  - date_added: $(date "+%Y-%m-%d %H:%M:%S %Z %:::z")
+  - date_updated:  # don't edit this
+  - read_status: # don't edit this
+  - tags:  # ENTER A BULLETED LIST OF TAGS
+  - projects:  # ENTER A BULLETED LIST OF PROJECTS
+  - reading_folder:  # don't edit this
+  - category: research  # EDIT THIS WITH THE CATEGORY
+EOF
 }
 
 CreateExtEntry() {
-    key="$1"
+    bibtex="$1"
+    tmpbufext=$(mktemp --tmpdir=/tmp/ rmgr_extdata_XXXXXX)
+    # Start by writing out the default state of the fields
+    confirmation="r"
+    while true; do
+        case "$confirmation" in
+            "y") break ;;
+            "q") exit 10 ;;
+            "e") $EDITOR "$tmpbufext" ;;
+            "r")
+                CatDefaultExtEntry "$tmpbufext" "$bibtex"
+                confirmation="e"
+                continue
+                ;;
+        esac
+        extdata=$(cat "$tmpbufext" |\
+            sed -n '/RMGR_START/,$ p' |\
+            sed -E 's/#.*//g' |\
+            tail -n +2\
+        )
+        echo
+        echo "$extdata"
+        read -p 'Does this look correct? [y|q|e|r]: ' confirmation
+    done
+    # Write to db
     [ -s "$EXT" ] && echo >> "$EXT"
-    cat >> "$EXT" << EOF
-- $key:
-  - last_access:
-  - date_added: $(date "+%Y-%m-%d %H:%M:%S %Z %:::z")
-  - date_updated:
-  - read_status:
-  - tags:
-  - projects:
-  - reading_folder:
-  - category:
-EOF
+    # Only write the YAML portion
+    echo "$extdata" >> "$EXT"
 }
 
 ##### MAIN #####
 
 source rmgr_setupenv
 
-record="$1"
-[ -z "$record" ] && PrintUsage && exit 1
-key=$(rmgr_extractkey "$record")
+# In case the script's output needs to be saved in a variable or piped to
+# another script, stdout will not print to /dev/tty. Save whatever /dev/stdout
+# is set to, redirect to /dev/tty, and reset it. At the end return the updated
+# BibTeX.
+exec 9<>/dev/stdout
+exec 1<>/dev/tty
 
-[ ! -z $(rmgr_searchkey "$key") ] && echo "$key already exists in $BIB" && exit 2
+bibtex="$1"
+if [ -z "$bibtex" ]; then
+    [ ! -t 0 ] && bibtex=$(</dev/stdin)
+    [ -z "$bibtex" ] && PrintUsage && exit 1
+fi
+bibtex=$(rmgr_formatbib "$bibtex")
+key=$(bib2key "$bibtex")
 
-CreateBibEntry "$record"
-CreateExtEntry "$key"
-rmgr_updlist "$key" tags
-rmgr_updlist "$key" projects
-rmgr_updval "$key" category
+# Reattach tty to stdin (in case data was piped in)
+exec 0</dev/tty
+
+askToEdit="yes"  # ask to edit the first time around
+while true; do
+    while CheckKeyExists "$key"; do
+        echo
+        newkey=""
+        while [ -z "$newkey" ]; do
+            read -p 'Enter new key ($ to skip adding entry): ' newkey
+        done
+        if [ "$newkey" = "$" ]; then
+            # Leave the bibtex on stdout
+            exec 1<&9
+            echo "$bibtex"
+            exit 50
+        fi
+        bibtex=$(echo "$bibtex" | sed -E "s/$key/$newkey/")
+        key=$(bib2key "$bibtex")
+        allowEditing="yes"  # allow editing after a change
+    done
+    [ "$allowEditing" = "no" ] && break
+    echo
+    echo "$bibtex"
+    read -p "Does this look correct? [y|e|q]: " confirmation
+    case "$confirmation" in
+        "y") break ;;
+        "q") exit 10 ;;
+        "e")
+            [ ! -f "$tmpbufbib" ] && tmpbufbib=$(mktemp --tmpdir=/tmp/ rmgr_bib_XXXXXX)
+            echo "$bibtex" > "$tmpbufbib"
+            $EDITOR "$tmpbufbib"
+            bibtex=$(cat "$tmpbufbib")
+            key=$(bib2key "$bibtex")
+            # If we just edited and the key is unique, then we don't have to
+            # edit again. If we are presented with the prompt, then it's just
+            # annoying.
+            askToEdit="no"
+            ;;
+    esac
+    bibtex=$(rmgr_formatbib "$bibtex")
+done
+
+CreateExtEntry "$bibtex"
+
+# Write the BibTeX to the db
+[ -s "$BIB" ] && echo >> "$BIB"
+echo "$bibtex" >> "$BIB"
+
+# Finally leave the updated bibtex on stdout
+exec 1<&9
+echo "$bibtex"
+exit 0

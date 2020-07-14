@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Try to infer the DOI from a PDF document.
+
+PrintUsage() {
+    cat << EOF
+Usage: $(basename $0) <PDF>
+
+Try to extract DOI from a PDF.
+EOF
+}
+
+file="$1"
+[ ! -f "$file" ] && PrintUsage && exit 1
+extension=$(echo "${file##*.}" | tr '[:upper:]' '[:lower:]')
+[ ! "$extension" = "pdf" ] && exit 2
+
+doi=$(pdfinfo "$file" 2>/dev/null | grep -io "doi:.*" | cut -d ':' -f 2) ||\
+    doi=$(pdftotext "$file" 2>/dev/null - | grep -io "doi:.* " -m 1 | cut -d ':' -f 2) ||\
+    exit 2
+
+[ -z "$doi" ] && exit 2
+echo "$doi"

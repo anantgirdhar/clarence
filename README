@@ -1,3 +1,14 @@
 # rmgr (Read/Reference Manager)
 
 A simple tool to manage a reading list / academic references offline.
+
+## Installation
+
+Run
+
+    sudo make install
+
+If you want to run without sudo, change the PREFIX variable in the Makefile to
+somewhere your user can write to.
+
+Alternatively, copy the scripts to somewhere in your $PATH.
