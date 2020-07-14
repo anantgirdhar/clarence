@@ -1,3 +1,11 @@
 # rmgr (Read/Reference Manager)
 
 A simple tool to manage a reading list / academic references offline.
+
+## Installation
+
+Run
+
+    make install
+
+Alternatively, copy the scripts to somewhere in your $PATH.
