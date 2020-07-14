@@ -2,6 +2,12 @@
 
 A simple tool to manage a reading list / academic references offline.
 
+## Dependencies
+
+curl
+pdfinfo
+pdftotext
+
 ## Installation
 
 Run
