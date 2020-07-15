@@ -23,6 +23,7 @@ case $? in
         type=$(rmgr_key2bib "$searchResults" | bib2type)
         case "$type" in
             article) dir="$ARTICLES" ;;
+            inproceedings) dir="$ARTICLES" ;;
             book) dir="$BOOKS" ;;
             phdthesis) dir="$THESES" ;;
             techreport) dir="$TECHREPORTS" ;;
