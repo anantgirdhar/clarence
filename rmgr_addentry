@@ -112,6 +112,7 @@ if [ -z "$bibtex" ]; then
     [ ! -t 0 ] && bibtex=$(</dev/stdin)
     [ -z "$bibtex" ] && PrintUsage && exit 1
 fi
+bibtex=$(rmgr_formatkey "$bibtex")
 bibtex=$(rmgr_formatbib "$bibtex")
 key=$(bib2key "$bibtex")
 
