@@ -9,6 +9,8 @@ awk
 curl
 pdfinfo
 pdftotext
+pandoc-citeproc
+jq
 
 ## Installation
 
