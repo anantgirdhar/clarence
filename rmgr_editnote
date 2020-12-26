@@ -40,7 +40,7 @@ CreateArticleNote() {
     category=$(rmgr_getval -d '<++>' "$key" category)
     # Replace metadata fields in the template
     cat "$TEMPLATES/article" |\
-        sed -E "s|^title:.*|title: \"$title [\@$key]\"|" |\
+        sed -E "s|^title:.*|title: \"$title\" [\@$key]|" |\
         sed -E "s/^author:.*/author: \n$authors/" |\
         sed -E "s/^journal:.*/journal: $journal/" |\
         sed -E "s/^year:.*/year: $year/" |\
