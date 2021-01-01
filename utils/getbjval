@@ -1,0 +1,90 @@
+#!/bin/sh
+
+# Extract the value for a key from a BibJSON record
+
+PrintUsage() {
+  cat << EOF
+Usage: $(basename $0) [options] <key> <BibJSON>
+
+Extract the value for a key from a BibJSON entry.
+
+The BibJSON can be provided as an argument or can be piped in.
+
+Options:
+  -j: If output is JSON, don't fuss about it and just return it
+EOF
+}
+
+GetType() {
+  rawType="$(echo $1 | jq -r .$key)"
+  case "$rawType" in
+    "paper-conference") echo "inproceedings" ;;
+    "article-journal") echo "article" ;;
+    "book") echo "book" ;;
+    "report") echo "techreport" ;;
+    # "thesis") echo "phdthesis" ;;
+    *) echo "$rawType" ;;
+  esac
+}
+
+GetAuthorList() {
+  echo "$1" |\
+    # Extract the names and concatenate them with "+" in between
+    jq -r '[.author[] | .given + " " + .family + "+"] | add' |\
+    # Remove the last "+"
+    rev | cut -c 2- | rev |\
+    # Change to YAML formatted list
+    sed 's/+/\n/g' | sed 's/^/- /'
+}
+
+GetFirstAuthor() {
+  echo "$1" | jq -r '.author[0].given + " " + .author[0].family'
+}
+
+Dispatcher() {
+  key="$1"
+  bibjson="$2"
+  case "$key" in
+    type) GetType "$bibjson" ;;
+    year) echo "$bibjson" | jq -r '.issued."date-parts"[0][0]' ;;
+    month) echo "$bibjson" | jq -r '.issued."date-parts"[0][1]' ;;
+    authorlist) GetAuthorList "$bibjson" ;;
+    firstauthor) GetFirstAuthor "$bibjson" ;;
+    journal) echo "$bibjson" | jq -r '."container-title"' ;;
+    booktitle) echo "$bibjson" | jq -r '."container-title"' ;;
+    ISSN) echo "$bibjson" | jq -r '.ISSN[0]' ;;
+    *) echo "$bibjson" | jq -r ".$key" ;;
+  esac
+}
+
+##### MAIN #####
+
+# Extract options
+case "$1" in
+  "-j") JSON_OK="yes" && shift ;;
+esac
+
+key="$1"
+[ -z "$key" ] && PrintUsage && exit 1
+
+bibjson="$2"
+if [ -z "$bibjson" ]; then
+  [ ! -t 0 ] && bibjson=$(</dev/stdin)
+  [ -z "$bibjson" ] && PrintUsage && exit 1
+fi
+
+result=$(Dispatcher "$key" "$bibjson")
+
+# Sanitize the output
+if [ "$result" = "null" ]; then
+  # No value was found for this field
+  exit 2
+elif echo "$result" | jq 'keys' >/dev/null 2>&1 ; then
+  # The output obtained was valid JSON with fields in it - maybe this is a
+  # compound field that needs to be parsed differently and aggregated before
+  # returning?
+  # Return only if the option is set, otherwise, freak out.
+  [ "$JSON_OK" = "yes" ] && echo "$result" || exit 3
+else
+  echo "$result"
+fi

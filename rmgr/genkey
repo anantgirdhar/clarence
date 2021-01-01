@@ -1,0 +1,61 @@
+#!/bin/sh
+
+# Generate a key according to the settings
+
+PrintUsage() {
+    cat << EOF
+Usage: $(basename $0) [options] <BibJSON>
+
+Generate a key for the entry according to the data in the entry and the
+settings. The BibJSON entry can be piped in but command line arguments take
+precedence.
+
+Options:
+  -u: create new unique key
+      To avoid clashes, the key is appended with an extra character to make it
+      unique, if required.
+EOF
+}
+
+GetFirstAuthorLastName() {
+  echo "$1" | jq -r '.author[0].family'
+}
+
+GetFirstAuthorFirstInitial() {
+  echo "$1" | jq -r '.author[0].given' | cut -b 1
+}
+
+GetYear() {
+  echo "$1" | getbjval year
+}
+
+MakeUnique() {
+  key="$1"
+  matchedKeys=$(rmgr/searchkey -p "$key" | sort | uniq)
+  [ -z "$matchedKeys" ] && echo "$key" && exit 0
+  lastKey=$(echo "$matchedKeys" | tail -n 1)
+  suffix=$(echo "$lastKey" | sed "s/$key//")
+  [ -z "$suffix" ] && suffix="b" || suffix=$(echo "$suffix" | tr '[a-y]' '[b-z]')
+  echo "$key$suffix" && exit 0
+}
+
+##### MAIN #####
+
+[ "$1" = '-u' ] && CREATE_UNIQUE="yes" && shift
+
+bibjson="$1"
+if [ -z "$bibjson" ]; then
+    [ ! -t 0 ] && bibjson=$(</dev/stdin)
+    [ -z "$bibjson" ] && PrintUsage && exit 1
+fi
+
+# Set the key to Lf-Y
+# - L: full last name of first author
+# - f: first initial of first author
+# - Y: 4-digit year
+
+L=$(GetFirstAuthorLastName "$bibjson")
+f=$(GetFirstAuthorFirstInitial "$bibjson")
+Y=$(GetYear "$bibjson")
+key=$(echo "$L$f-$Y" | tr '[:upper:]' '[:lower:]')
+[ "$CREATE_UNIQUE" = "yes" ] && MakeUnique "$key" || echo "$key"

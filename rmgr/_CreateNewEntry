@@ -1,0 +1,66 @@
+#!/bin/sh
+
+# Create a new entry in the database
+
+PrintUsage() {
+  cat << EOF
+Usage: $(basename $0) <key> <BibJSON>
+EOF
+}
+
+CatDefaults() {
+  tmpbuf="$1"
+  key="$2"
+  bibjson="$3"
+  entryType=$(getbjval type "$bibjson")
+  capitalizedEntryType=$(echo "$entryType" | sed 's/./\U&/')
+  CatDefaultsScript="rmgr/_CatDefaultsFor$capitalizedEntryType"
+  [ ! -f "$CatDefaultsScript" ] && \
+    echo "I wasn't taught how to add an entry for a '$entryType' type..." && \
+    exit 4
+  $CatDefaultsScript "$tmpbuf" "$key" "$bibjson"
+  # case "$entryType" in
+  #   article) rmgr/_CatDefaultsForArticle "$tmpbuf" "$key" "$bibjson" ;;
+  #   inproceedings) rmgr/_CatDefaultsForInproceedings "$tmpbuf" "$key" "$bibjson" ;;
+  #   book) rmgr/_CatDefaultsForBook "$tmpbuf" "$key" "$bibjson" ;;
+  #   *) echo "I wasn't taught how to add an entry for a '$entryType' type..." && exit 4 ;;
+  # esac
+}
+
+##### MAIN #####
+
+key="$1"
+[ -z "$key" ] && PrintUsage && exit 1
+
+bibjson="$2"
+[ -z "$bibjson" ] && PrintUsage && exit 1
+
+# Attach to tty to be able to print to the terminal without affecting stdout.
+exec 9<>/dev/stdout
+exec 1<>/dev/tty
+# Also reattach tty to stdin so that user input can be received.
+exec 0</dev/tty
+
+# Create a new temporary buffer
+tmpbuf=$(mktemp --tmpdir=/tmp/ "$APP"_entry_XXXXXX.yaml)
+
+# Start by writing out the defaults for the fields
+confirmation="r"
+while true; do
+  case "$confirmation" in
+    "y") break ;;
+    "q") exit 3 ;;
+    "e") $EDITOR "$tmpbuf" ;;
+    "r") CatDefaults "$tmpbuf" "$key" "$bibjson" && confirmation="e" && continue ;;
+  esac
+  record=$(sed -E 's/#.*//g' "$tmpbuf" | sed '/^$/ d')
+  echo
+  echo "$record" | $HIGHLIGHT_YAML
+  read -p 'Does this look correct? [y|q|e|r]: ' confirmation
+done
+
+echo >> "$DB"
+echo "$record" >> "$DB"
+
+# Reattach to stdout
+exec 1<&9

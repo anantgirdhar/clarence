@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# Command Line Academic Reference Manager
+
+# This is the main entry point to the program
+
+PrintUsage() {
+  cat <<EOF
+Usage: $(basename $0) command arguments
+
+Command list:
+
+- addentry: Add an entry to the database
+- searchkey: Search for a key in the database
+- key2record: Get the full record for the specified key
+EOF
+}
+
+##### MAIN #####
+
+# Setup the environment
+CONFDIR="."
+[ ! -d "$CONFDIR" ] && echo "Config directory missing." && exit 99
+export RCFILE="$CONFDIR/sample_config"
+[ ! -f "$RCFILE" ] && echo "Config missing." && exit 99
+source "$RCFILE"
+
+# Check that all files are present
+[ ! -d "$RMGR_ROOT" ] && echo "Root directory ($RMGR_ROOT) not a directory." && exit 98
+[ ! -f "$DB" ] && echo "Database ($DB) missing." && exit 98
+[ ! -d "$DOCS" ] && echo "$""DOCS ($DOCS) not a directory." && exit 98
+[ ! -d "$NOTES" ] && echo "$""NOTES  ($NOTES) not a directory." && exit 98
+
+# Create an alias for the main program name (so that it can be used within the
+# subcommand scripts).
+APP="$(basename $0)"
+export APP
+
+cmd="$1"
+[ -z "$cmd" ] && PrintUsage && exit 1
+
+shift
+
+case "$cmd" in
+  "addentry") rmgr/addentry "$@" ;;
+  "searchkey") rmgr/searchkey "$@" ;;
+  "key2record") rmgr/key2record "$@" ;;
+  *) PrintUsage && exit 1 ;;
+esac

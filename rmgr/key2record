@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# Get the record for a key
+
+PrintUsage() {
+  cat << EOF
+Usage: $(basename $0) <search key>
+
+Search the database for the search key. The key can be piped in or provided as
+an argument (which takes precedence).
+
+Exit codes:
+- 0: success
+- 1: search key not provided
+- 2: no matching keys found
+- 3: multiple matching keys found
+EOF
+}
+
+##### MAIN #####
+
+key="$1"
+if [ -z "$key" ]; then
+  [ ! -t 0 ] && key=$(</dev/stdin)
+  [ -z "$key" ] && PrintUsage && exit 1
+fi
+
+searchResults=$(rmgr/searchkey "$key")
+exitCode="$?"
+
+if [ "$exitCode" = "0" ] || [ "$exitCode" = "3" ]; then
+  data=$(awk "/^-\s*$key:\s*$/ {flag=1; print "\n"} /^\s*$/ {flag=0} {if(flag) print}" "$DB")
+  echo "$data"
+fi
+exit $exitCode
