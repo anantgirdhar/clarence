@@ -19,6 +19,7 @@ GetType() {
   rawType="$(echo $1 | jq -r .$key)"
   case "$rawType" in
     "paper-conference") echo "inproceedings" ;;
+    "proceedings-article") echo "inproceedings" ;;
     "article-journal") echo "article" ;;
     "journal-article") echo "article" ;;
     "book") echo "book" ;;
