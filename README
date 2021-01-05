@@ -6,11 +6,13 @@ A simple tool to manage a reading list / academic references offline.
 
 sed
 awk
+cut
+jq
 curl
+iconv
 pdfinfo
 pdftotext
 pandoc-citeproc
-jq
 
 ## Installation
 
