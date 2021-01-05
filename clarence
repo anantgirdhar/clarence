@@ -20,9 +20,9 @@ EOF
 ##### MAIN #####
 
 # Setup the environment
-CONFDIR="."
+CONFDIR="$XDG_CONFIG_HOME/clarence"
 [ ! -d "$CONFDIR" ] && echo "Config directory missing." && exit 99
-export RCFILE="$CONFDIR/sample_config"
+export RCFILE="$CONFDIR/rc"
 [ ! -f "$RCFILE" ] && echo "Config missing." && exit 99
 source "$RCFILE"
 
