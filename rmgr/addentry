@@ -47,7 +47,7 @@ PreventKeyCollisions() {
       # Just make sure to reset stdout so that the output can be picked up by
       # the script.
       exec 1<&9
-      rmgr/genkey -u "$bibjson" && exit 0
+      genkey -u "$bibjson" && exit 0
       ;;
   esac
 }
@@ -64,7 +64,7 @@ exec 9<>/dev/stdout
 exec 1<>/dev/tty
 
 # Extract information from BibJSON
-key=$(rmgr/genkey "$bibjson")
+key=$(genkey "$bibjson")
 
 [ -z "$key" ] && exit 2
 
@@ -78,6 +78,6 @@ if [ "$exitStatus" != "0" ]; then
 fi
 
 # Create new entry (or exit with the appropriate error code)
-rmgr/_CreateNewEntry "$key" "$bibjson" || exit $?
+_CreateNewEntry "$key" "$bibjson" || exit $?
 
 exec 1<&9

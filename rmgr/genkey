@@ -31,7 +31,7 @@ GetYear() {
 
 MakeUnique() {
   key="$1"
-  matchedKeys=$(rmgr/searchkey -p "$key" | sort | uniq)
+  matchedKeys=$(searchkey -p "$key" | sort | uniq)
   [ -z "$matchedKeys" ] && echo "$key" && exit 0
   lastKey=$(echo "$matchedKeys" | tail -n 1)
   suffix=$(echo "$lastKey" | sed "s/$key//")

@@ -14,7 +14,7 @@ CatDefaults() {
   bibjson="$3"
   entryType=$(getbjval type "$bibjson")
   capitalizedEntryType=$(echo "$entryType" | sed 's/./\U&/')
-  CatDefaultsScript="rmgr/_CatDefaultsFor$capitalizedEntryType"
+  CatDefaultsScript="_CatDefaultsFor$capitalizedEntryType"
   [ ! -f "$CatDefaultsScript" ] && \
     echo "I wasn't taught how to add an entry for a '$entryType' type..." && \
     exit 4

@@ -36,14 +36,19 @@ source "$RCFILE"
 APP="$(basename $0)"
 export APP
 
+# Add the rmgr scripts to the PATH
+export BASE_CODE_PATH=$(dirname $(realpath $0))
+[ ! -d "$BASE_CODE_PATH/rmgr" ] && echo "Code not installed correctly." && exit 97
+export PATH="$PATH:$BASE_CODE_PATH/rmgr"
+
 cmd="$1"
 [ -z "$cmd" ] && PrintUsage && exit 1
 
 shift
 
 case "$cmd" in
-  "addentry") rmgr/addentry "$@" ;;
-  "searchkey") rmgr/searchkey "$@" ;;
-  "key2record") rmgr/key2record "$@" ;;
+  "addentry") addentry "$@" ;;
+  "searchkey") searchkey "$@" ;;
+  "key2record") key2record "$@" ;;
   *) PrintUsage && exit 1 ;;
 esac
