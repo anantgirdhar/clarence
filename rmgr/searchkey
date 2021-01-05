@@ -33,7 +33,7 @@ fi
 [ "$PREFIX_MODE" = "yes" ] && key="$key.*"
 
 # Search for the keys in the (YAML) DB and extract just the key names
-matchedKeys=$(sed -En "/^- $key:/ s/- (.*):/\1/ p" "$DB")
+matchedKeys=$(sed -En "/^- $key:/ s/- (.*)\s*:\s*/\1/ p" "$DB")
 
 [ -z "$matchedKeys" ] && exit 2
 echo "$matchedKeys"
