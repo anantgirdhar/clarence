@@ -47,7 +47,7 @@ while true; do
     "e") $EDITOR "$tmpbuf" ;;
     "r") CatDefaults "$tmpbuf" "$key" "$bibjson" && confirmation="e" && continue ;;
   esac
-  record=$(sed -E 's/#.*//g' "$tmpbuf" | sed '/^$/ d')
+  record=$(sed -E 's/\s*#.*//g' "$tmpbuf" | sed '/^$/ d')
   echo
   echo "$record" | $HIGHLIGHT_YAML
   read -p 'Does this look correct? [y|q|e|r]: ' confirmation
