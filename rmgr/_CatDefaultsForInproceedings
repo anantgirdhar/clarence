@@ -16,7 +16,7 @@ cat > "$tmpbuf" << EOF
   - author:
 $(getbjval authorlist "$bibjson" | sed 's/^/    /' || echo " # there was an error (#$?) reading this")
   - year: $(getbjval year "$bibjson" || echo " # there was an error (#$?) reading this")
-  - type: $(getbjval type "$bibjson" || echo " # there was an error (#$?) reading this")
+  - type: inproceedings
   - read_status: unread  # Set to read / unread
   - tags:  # Enter a list of tags
   - projects:  # Enter a list of projects
