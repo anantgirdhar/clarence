@@ -42,6 +42,20 @@ GetFirstAuthor() {
   echo "$1" | jq -r '.author[0].given + " " + .author[0].family'
 }
 
+GetValOrFirstElement() {
+  bibjson="$1"
+  fieldName="$2"
+  value=$(echo "$bibjson" | jq -r ".$fieldName")
+  # Sometimes, this can be a list. So check if this is valid JSON (but not a
+  # string) and, if it is, just get the first element which should be the
+  # required value.
+  if echo "$value" | jq 'keys' >/dev/null 2>&1 ; then
+    echo "$value" | jq -r '.[0]'
+  else
+    echo "$value"
+  fi
+}
+
 Dispatcher() {
   key="$1"
   bibjson="$2"
@@ -51,10 +65,10 @@ Dispatcher() {
     month) echo "$bibjson" | jq -r '.issued."date-parts"[0][1]' ;;
     authorlist) GetAuthorList "$bibjson" ;;
     firstauthor) GetFirstAuthor "$bibjson" ;;
-    journal) echo "$bibjson" | jq -r '."container-title"' ;;
-    booktitle) echo "$bibjson" | jq -r '."container-title"' ;;
+    journal) GetValOrFirstElement "$bibjson" '"container-title"' ;;
+    booktitle) GetValOrFirstElement "$bibjson" '"container-title"' ;;
     ISSN) echo "$bibjson" | jq -r '.ISSN[0]' ;;
-    *) echo "$bibjson" | jq -r ".$key" ;;
+    *) GetValOrFirstElement "$bibjson" "$key" ;;
   esac
 }
 
