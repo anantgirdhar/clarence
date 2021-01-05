@@ -1,4 +1,4 @@
-# rmgr (Read/Reference Manager)
+# clarence (Command Line Academic ReferENCE manager)
 
 A simple tool to manage a reading list / academic references offline.
 
@@ -27,6 +27,6 @@ Alternatively, copy the scripts to somewhere in your $PATH.
 
 ## Configuration
 
-The configuration file needs to be placed at $XDG_CONFIG_HOME/rmg/rmgr.conf.
+The configuration file needs to be placed at $XDG_CONFIG_HOME/clarence/rc.
 The paths in this file can be customized according to your setup. A sample
 config file is provided in the source folder (sample_config).
