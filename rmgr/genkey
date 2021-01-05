@@ -14,19 +14,38 @@ Options:
   -u: create new unique key
       To avoid clashes, the key is appended with an extra character to make it
       unique, if required.
+  -y: input is in YAML format (instead of BibJSON)
 EOF
 }
 
 GetFirstAuthorLastName() {
-  echo "$1" | jq -r '.author[0].family'
+  INPUT_FORMAT="$1"
+  record="$2"
+  if [ "$INPUT_FORMAT" = "bibjson" ]; then
+    echo "$record" | jq -r '.author[0].family'
+  elif [ "$INPUT_FORMAT" = "yaml" ]; then
+    echo "$record" | getyamlval "firstauthor" "$record" | rev | cut -f 1 -d ' ' | rev
+  fi
 }
 
 GetFirstAuthorFirstInitial() {
-  echo "$1" | jq -r '.author[0].given' | cut -b 1
+  INPUT_FORMAT="$1"
+  record="$2"
+  if [ "$INPUT_FORMAT" = "bibjson" ]; then
+    echo "$record" | jq -r '.author[0].given' | cut -b 1
+  elif [ "$INPUT_FORMAT" = "yaml" ]; then
+    echo "$record" | getyamlval "firstauthor" "$record" | cut -b 1
+  fi
 }
 
 GetYear() {
-  echo "$1" | getbjval year
+  INPUT_FORMAT="$1"
+  record="$2"
+  if [ "$INPUT_FORMAT" = "bibjson" ]; then
+    echo "$record" | getbjval year
+  elif [ "$INPUT_FORMAT" = "yaml" ]; then
+    echo "$record" | getyamlval "year"
+  fi
 }
 
 MakeUnique() {
@@ -35,13 +54,28 @@ MakeUnique() {
   [ -z "$matchedKeys" ] && echo "$key" && exit 0
   lastKey=$(echo "$matchedKeys" | tail -n 1)
   suffix=$(echo "$lastKey" | sed "s/$key//")
-  [ -z "$suffix" ] && suffix="b" || suffix=$(echo "$suffix" | tr '[a-y]' '[b-z]')
+  if [ -z "$suffix" ]; then
+    suffix="b"
+  else
+    suffix=$(echo "$suffix" | tr '[a-y]' '[b-z]')
+  fi
   echo "$key$suffix" && exit 0
 }
 
 ##### MAIN #####
 
-[ "$1" = '-u' ] && CREATE_UNIQUE="yes" && shift
+# Set some defaults for the options
+CREATE_UNIQUE="no"
+INPUT_FORMAT="bibjson"
+
+# Parse the options
+while true; do
+  case "$1" in
+    '-u') CREATE_UNIQUE="yes" && shift ;;
+    '-y') INPUT_FORMAT="yaml" && shift ;;
+    *) break ;;
+  esac
+done
 
 bibjson="$1"
 if [ -z "$bibjson" ]; then
@@ -49,13 +83,17 @@ if [ -z "$bibjson" ]; then
     [ -z "$bibjson" ] && PrintUsage && exit 1
 fi
 
-# Set the key to Lf-Y
-# - L: full last name of first author
+# Set the key to fL-Y
 # - f: first initial of first author
+# - L: full last name of first author
 # - Y: 4-digit year
 
-L=$(GetFirstAuthorLastName "$bibjson")
-f=$(GetFirstAuthorFirstInitial "$bibjson")
-Y=$(GetYear "$bibjson")
-key=$(echo "$L$f-$Y" | tr '[:upper:]' '[:lower:]')
-[ "$CREATE_UNIQUE" = "yes" ] && MakeUnique "$key" || echo "$key"
+f=$(GetFirstAuthorFirstInitial "$INPUT_FORMAT" "$bibjson")
+L=$(GetFirstAuthorLastName "$INPUT_FORMAT" "$bibjson")
+Y=$(GetYear "$INPUT_FORMAT" "$bibjson")
+key=$(echo "$f$L-$Y" | tr '[:upper:]' '[:lower:]' | iconv -f utf8 -t ascii//TRANSLIT)
+if [ "$CREATE_UNIQUE" = "yes" ]; then
+  MakeUnique "$key"
+else
+  echo "$key"
+fi

@@ -1,0 +1,90 @@
+#!/bin/sh
+
+# Add a file to the database
+
+PrintUsage() {
+  cat << EOF
+Usage: $(basename $0) [options] <file>
+
+Take a file and copy it into the appropriate folder in the database. Currently,
+only PDF files are supported.
+
+Attempt to figure out what the document is (query crossref or something).
+
+Options:
+  -d: delete the original file after copying
+EOF
+}
+
+GetDOI() {
+  file="$1"
+  doi=$(pdf2doi "$file")
+  [ -z "$doi" ] && \
+    echo "Unable to auto-detect DOI number. " && \
+    read -p "Enter manual search terms: " searchTerms && \
+    doi=$(querycr "$searchTerms")
+  [ -z "$doi" ] && exit 2
+  echo "$doi" && exit 0
+}
+
+GenerateEntry() {
+  doi="$1"
+  if [ -z "$doi" ]; then
+    exec 9<>/dev/stdout
+    exec 1<>/dev/tty
+    echo "Unable to acquire DOI number. Enter information manually."
+    exec 1<&9
+    key=$(_CreateManualEntry)
+  else
+    bibjson=$(doi2bibjson "$doi")
+    if [ -z "$bibjson" ]; then
+      exec 9<>/dev/stdout
+      exec 1<>/dev/tty
+      echo "Unable to get the BibJSON. Enter manually."
+      exec 1<&9
+      key=$(_CreateManualEntry)
+    else
+      key=$(addentry "$bibjson")
+    fi
+  fi
+  echo "$key"
+}
+
+##### MAIN #####
+
+# Set default options
+deleteOriginalFile="no"
+
+# Parse options
+[ "$1" = "-d" ] && deleteOriginalFile="yes" && shift
+
+file="$1"
+[ -z "$file" ] && PrintUsage && exit 1
+
+# Try to generate the entry that should accompany this file
+doi=$(GetDOI "$file")
+key=$(GenerateEntry "$doi")
+
+# Move the file to the appropriate location
+# But first create a new name for the file that matches the key
+dest=$(echo "$key" | sed 's/-/_/')
+[ -z "$dest" ] && echo "No destination filename was set. Not moving file." >&2 && exit 4
+dest="$DOCS/$dest.${file##*.}"
+# Check if the file already exists and move under the appropriate conditions
+if [ -f "$dest" ]; then
+  exec 9<>/dev/stdout
+  exec 1<>/dev/tty
+  exec 0</dev/tty
+  confirmation=
+  while [ "$confirmation" != "y" ] && [ "$confirmation" != "n" ]; do
+    read -p "File already exists. Replace? [y|n]: " confirmation
+  done
+  [ "$confirmation" = "y" ] && cp "$file" "$dest"
+else
+  cp "$file" "$dest"
+fi
+# Delete the original if required
+[ "$deleteOriginalFile" = "yes" ] && rm "$file"
+
+# If we've got here, everything went well (hopefully)
+exit 0

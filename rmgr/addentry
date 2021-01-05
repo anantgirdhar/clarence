@@ -16,7 +16,7 @@ EOF
 PreventKeyCollisions() {
   key="$1"
   bibjson="$2"
-  matchedKeys=$($APP searchkey "$key")
+  matchedKeys=$($APP searchkey -p "$key")
   exitCode="$?"
   matchedKeys=$(echo "$matchedKeys" | uniq | sort)
   case "$exitCode" in
@@ -32,7 +32,7 @@ PreventKeyCollisions() {
       # echo "Dev this." && exit 100
       exec 9<>/dev/stdout
       exec 1>/dev/tty
-      echo "Key collision. Do any of the following records match?"
+      echo "WARNING: Key collision. Do any of the following records match?"
       while IFS=" " read -r matchedKey; do
         $APP key2record "$matchedKey" | $HIGHLIGHT_YAML
         exec 8<&0
@@ -40,7 +40,7 @@ PreventKeyCollisions() {
         read -p "Does this match whatever you're trying to add? [y|N] " response
         exec 0<&8
         [ -z "$response" ] && response="n"
-        [ "$response" = "y" ] && exit 3
+        [ "$response" = "y" ] && exec 1<&9 && echo "$matchedKey" && exit 3
       done <<< "$matchedKeys"
       # If we get here, the user intends to add this new record to the
       # database. Create a new key (by appending an extra character).
@@ -60,9 +60,6 @@ if [ -z "$bibjson" ]; then
   [ -z "$bibjson" ] && PrintUsage && exit 1
 fi
 
-exec 9<>/dev/stdout
-exec 1<>/dev/tty
-
 # Extract information from BibJSON
 key=$(genkey "$bibjson")
 
@@ -78,6 +75,7 @@ if [ "$exitStatus" != "0" ]; then
 fi
 
 # Create new entry (or exit with the appropriate error code)
-_CreateNewEntry "$key" "$bibjson" || exit $?
+key=$(_CreateNewEntry "$key" "$bibjson" || exit $?)
 
-exec 1<&9
+# Leave the key on stdout
+echo "$key"

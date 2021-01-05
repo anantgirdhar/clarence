@@ -11,6 +11,7 @@ Usage: $(basename $0) command arguments
 Command list:
 
 - addentry: Add an entry to the database
+- addfile: Add a file to the database
 - searchkey: Search for a key in the database
 - key2record: Get the full record for the specified key
 EOF
@@ -48,6 +49,7 @@ shift
 
 case "$cmd" in
   "addentry") addentry "$@" ;;
+  "addfile") addfile "$@" ;;
   "searchkey") searchkey "$@" ;;
   "key2record") key2record "$@" ;;
   *) PrintUsage && exit 1 ;;

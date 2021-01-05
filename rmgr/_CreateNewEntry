@@ -58,3 +58,6 @@ echo "$record" >> "$DB"
 
 # Reattach to stdout
 exec 1<&9
+
+# Leave the key on stdout
+echo "$record" | getyamlval "key"
