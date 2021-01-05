@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# Cat out the defaults for an "techreport" type into a temporary buffer
+
+tmpbuf="$1"
+key="$2"
+bibjson="$3"
+
+cat > "$tmpbuf" << EOF
+# Don't change the formatting of this document or any fields marked "DO NOT
+# EDIT". The type of fields that can be changed are mentioned in the
+# comments. Any data after a hash on any line will be ignored.
+
+- $key:  # DO NOT EDIT
+  - title: $(getbjval title "$bibjson" || echo " # there was an error (#$?) reading this")
+  - author:
+$(getbjval authorlist "$bibjson" | sed 's/^/    /' || echo " # there was an error (#$?) reading this")
+  - year: $(getbjval year "$bibjson" || echo " # there was an error (#$?) reading this")
+  - type: phdthesis
+  - read_status: unread  # Set to read / unread
+  - tags:  # Enter a list of tags
+  - projects:  # Enter a list of projects
+  - reading_folder:  # Enter a string without spaces
+  - category:  # Enter a string without spaces
+  - doi: $(getbjval DOI "$bibjson" || echo " # there was an error (#$?) reading this")
+  - url: $(getbjval URL "$bibjson" || echo " # there was an error (#$?) reading this")
+  - advisor: $(getbjval advisor "$bibjson" || echo " # there was an error (#$?) reading this")
+  - school: $(getbjval school "$bibjson" || echo "  # there was an error (#$?) reading this")
+  - ISSN: $(getbjval ISSN "$bibjson" || echo " # there was an error (#$?) reading this")
+  - ISBN: $(getbjval ISBN "$bibjson" || echo " # there was an error (#$?) reading this")
+  - last_access:  # DO NOT EDIT
+  - date_added: $(date "+%Y-%m-%d %H:%M:%S %Z %:::z")  # DO NOT EDIT
+  - date_updated:  # DO NOT EDIT
+EOF
