@@ -19,10 +19,14 @@ EOF
 GetDOI() {
   file="$1"
   doi=$(pdf2doi "$file")
-  [ -z "$doi" ] && \
-    echo "Unable to auto-detect DOI number. " && \
-    read -p "Enter manual search terms: " searchTerms && \
+  if [ -z "$doi" ]; then
+    exec 9<>/dev/stdout
+    exec 1<>/dev/tty
+    echo "Unable to auto-detect DOI number."
+    read -p "Enter manual search terms: " searchTerms
+    exec 1<&9
     doi=$(querycr "$searchTerms")
+  fi
   [ -z "$doi" ] && exit 2
   echo "$doi" && exit 0
 }
