@@ -14,10 +14,10 @@ install: $(RMGR)/* $(UTILS)
 	cp -f $(MAIN) $(PREFIX)/bin
 
 uninstall:
-	rm $(PREFIX)/bin/$(MAIN)
-	rm -rf $(RMGR)
+	rm -f $(PREFIX)/bin/$(MAIN)
+	rm -rf $(PREFIX)/bin/$(RMGR)
 	for f in $(UTILS); do \
-		rm $(PREFIX)/bin/$$(basename $$f); \
+		rm -f $(PREFIX)/bin/$$(basename $$f); \
 	done
 
 .PHONY: install uninstall
