@@ -27,6 +27,6 @@ Alternatively, copy the scripts to somewhere in your $PATH.
 
 ## Configuration
 
-The confirmation file needs to be placed at $XDG_CONFIG_HOME/rmg/rmgr.conf. The
-paths in this file can be customized according to your setup. A sample config
-file is provided in the source folder (sample_config).
+The configuration file needs to be placed at $XDG_CONFIG_HOME/rmg/rmgr.conf.
+The paths in this file can be customized according to your setup. A sample
+config file is provided in the source folder (sample_config).
