@@ -49,23 +49,6 @@ PreventKeyCollisions() {
       exec 1<&9
       rmgr/genkey -u "$bibjson" && exit 0
       ;;
-      
-      #TODO: Show the user the matching records
-      #TODO: Ask the user if any of the records match
-      #TODO: If something does match, update the previous record?
-      #TODO: If not, generate a new key (add a letter at the end)
-  esac
-}
-
-CreateNewEntry() {
-  key="$1"
-  bibjson="$2"
-  entryType=$(getbjval type "$bibjson")
-  case "$entryType" in
-    article) rmgr/_CreateEntryArticle "$key" "$bibjson" ;;
-    inproceedings) rmgr/_CreateEntryInproceedings "$key" "$bibjson" ;;
-    # book) _CreateEntryBook "$key" "$bibjson" ;;
-    *) echo "I wasn't taught how to add a(n) $entryType..." && exit 4 ;;
   esac
 }
 

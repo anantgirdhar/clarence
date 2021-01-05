@@ -19,12 +19,6 @@ CatDefaults() {
     echo "I wasn't taught how to add an entry for a '$entryType' type..." && \
     exit 4
   $CatDefaultsScript "$tmpbuf" "$key" "$bibjson"
-  # case "$entryType" in
-  #   article) rmgr/_CatDefaultsForArticle "$tmpbuf" "$key" "$bibjson" ;;
-  #   inproceedings) rmgr/_CatDefaultsForInproceedings "$tmpbuf" "$key" "$bibjson" ;;
-  #   book) rmgr/_CatDefaultsForBook "$tmpbuf" "$key" "$bibjson" ;;
-  #   *) echo "I wasn't taught how to add an entry for a '$entryType' type..." && exit 4 ;;
-  # esac
 }
 
 ##### MAIN #####
