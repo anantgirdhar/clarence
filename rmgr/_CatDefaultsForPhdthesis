@@ -28,7 +28,5 @@ $(getbjval authorlist "$bibjson" | sed 's/^/    /' || echo " # there was an erro
   - school: $(getbjval school "$bibjson" || echo "  # there was an error (#$?) reading this")
   - ISSN: $(getbjval ISSN "$bibjson" || echo " # there was an error (#$?) reading this")
   - ISBN: $(getbjval ISBN "$bibjson" || echo " # there was an error (#$?) reading this")
-  - last_access:  # DO NOT EDIT
   - date_added: $(date "+%Y-%m-%d %H:%M:%S %Z %:::z")  # DO NOT EDIT
-  - date_updated:  # DO NOT EDIT
 EOF
