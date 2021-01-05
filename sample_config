@@ -17,5 +17,6 @@ export HIGHLIGHT_YAML="highlight --syntax=yaml --out-format=truecolor"
 export HIGHLIGHT_BIBTEX="highlight --syntax=bibtex --out-format=truecolor"
 
 # Programs to use - set these here if you don't have them set elsewhere
-#export EDITOR="vim"
+# export EDITOR="vim"
 export PAGER="less"
+# export READER="zathura"

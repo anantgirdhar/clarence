@@ -63,7 +63,15 @@ deleteOriginalFile="no"
 [ "$1" = "-d" ] && deleteOriginalFile="yes" && shift
 
 file="$1"
-[ -z "$file" ] && PrintUsage && exit 1
+[ ! -f "$file" ] && PrintUsage && exit 1
+
+# Setup the preview
+$READER "$file" &
+previewPID="$!"
+EndSafely() {
+  kill "$previewPID"
+}
+trap "EndSafely" SIGINT
 
 # Try to generate the entry that should accompany this file
 doi=$(GetDOI "$file")
@@ -72,7 +80,11 @@ key=$(GenerateEntry "$doi")
 # Move the file to the appropriate location
 # But first create a new name for the file that matches the key
 dest=$(echo "$key" | sed 's/-/_/')
-[ -z "$dest" ] && echo "No destination filename was set. Not moving file." >&2 && exit 4
+if [ -z "$dest" ]; then
+  echo "No destination filename was set. Not moving file." >&2
+  EndSafely
+  exit 4
+fi
 dest="$DOCS/$dest.${file##*.}"
 # Check if the file already exists and move under the appropriate conditions
 exec 9<>/dev/stdout
@@ -83,7 +95,7 @@ if [ -f "$dest" ]; then
   while [ "$confirmation" != "y" ] && [ "$confirmation" != "n" ]; do
     read -p "File already exists. Replace? [y|n]: " confirmation
   done
-  [ "$confirmation" = "y" ] && cp "$file" "$dest"
+  [ "$confirmation" = "y" ] && cp "$file" "$dest" && echo "File copied."
 else
   cp "$file" "$dest"
   echo "File copied."
@@ -93,4 +105,5 @@ fi
 
 # If we've got here, everything went well (hopefully)
 echo "All done."
+EndSafely
 exit 0
