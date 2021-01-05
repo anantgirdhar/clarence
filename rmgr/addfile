@@ -75,10 +75,10 @@ dest=$(echo "$key" | sed 's/-/_/')
 [ -z "$dest" ] && echo "No destination filename was set. Not moving file." >&2 && exit 4
 dest="$DOCS/$dest.${file##*.}"
 # Check if the file already exists and move under the appropriate conditions
+exec 9<>/dev/stdout
+exec 1<>/dev/tty
+exec 0</dev/tty
 if [ -f "$dest" ]; then
-  exec 9<>/dev/stdout
-  exec 1<>/dev/tty
-  exec 0</dev/tty
   confirmation=
   while [ "$confirmation" != "y" ] && [ "$confirmation" != "n" ]; do
     read -p "File already exists. Replace? [y|n]: " confirmation
@@ -86,9 +86,11 @@ if [ -f "$dest" ]; then
   [ "$confirmation" = "y" ] && cp "$file" "$dest"
 else
   cp "$file" "$dest"
+  echo "File copied."
 fi
 # Delete the original if required
-[ "$deleteOriginalFile" = "yes" ] && rm "$file"
+[ "$deleteOriginalFile" = "yes" ] && rm "$file" && echo "Original file deleted."
 
 # If we've got here, everything went well (hopefully)
+echo "All done."
 exit 0
