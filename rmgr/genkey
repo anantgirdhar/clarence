@@ -91,7 +91,10 @@ fi
 f=$(GetFirstAuthorFirstInitial "$INPUT_FORMAT" "$bibjson")
 L=$(GetFirstAuthorLastName "$INPUT_FORMAT" "$bibjson")
 Y=$(GetYear "$INPUT_FORMAT" "$bibjson")
-key=$(echo "$f$L-$Y" | tr '[:upper:]' '[:lower:]' | iconv -f utf8 -t ascii//TRANSLIT)
+key=$(echo "$f$L-$Y" |\
+  sed 's/ //g' |\
+  tr '[:upper:]' '[:lower:]' |\
+  iconv -f utf8 -t ascii//TRANSLIT)
 if [ "$CREATE_UNIQUE" = "yes" ]; then
   MakeUnique "$key"
 else
