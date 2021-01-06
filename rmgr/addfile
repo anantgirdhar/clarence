@@ -77,6 +77,14 @@ trap "EndSafely" SIGINT
 doi=$(GetDOI "$file")
 key=$(GenerateEntry "$doi")
 
+# Get the entry type
+entryType=$(key2record "$key" | getyamlval "type")
+if [ -z "$entryType" ]; then
+  echo "Something went wrong while retrieving the type." >&2
+  EndSafely
+  exit 4
+fi
+
 # Move the file to the appropriate location
 # But first create a new name for the file that matches the key
 dest=$(echo "$key" | sed 's/-/_/')
@@ -85,7 +93,7 @@ if [ -z "$dest" ]; then
   EndSafely
   exit 4
 fi
-dest="$DOCS/$dest.${file##*.}"
+dest="$DOCS/$entryType/$dest.${file##*.}"
 # Check if the file already exists and move under the appropriate conditions
 exec 9<>/dev/stdout
 exec 1<>/dev/tty
