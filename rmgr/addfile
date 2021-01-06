@@ -54,6 +54,16 @@ GenerateEntry() {
   echo "$key"
 }
 
+CopyFile() {
+  src="$1"
+  dest="$2"
+  # Make sure that the destination directory exists
+  dir=$(dirname "$dest")
+  [ ! -d "$dir" ] && mkdir -p "$dir"
+  cp "$src" "$dest"
+  echo "File copied."
+}
+
 ##### MAIN #####
 
 # Set default options
@@ -76,6 +86,13 @@ trap "EndSafely" SIGINT
 # Try to generate the entry that should accompany this file
 doi=$(GetDOI "$file")
 key=$(GenerateEntry "$doi")
+
+# Make sure that there is a key for the entry that was just generated
+if [ -z "$key" ]; then
+  echo "Something went wrong in GenerateEntry." >&2
+  EndSafely
+  exit 4
+fi
 
 # Get the entry type
 entryType=$(key2record "$key" | getyamlval "type")
@@ -103,10 +120,9 @@ if [ -f "$dest" ]; then
   while [ "$confirmation" != "y" ] && [ "$confirmation" != "n" ]; do
     read -p "File already exists. Replace? [y|n]: " confirmation
   done
-  [ "$confirmation" = "y" ] && cp "$file" "$dest" && echo "File copied."
+  [ "$confirmation" = "y" ] && CopyFile "$file" "$dest"
 else
-  cp "$file" "$dest"
-  echo "File copied."
+  CopyFile "$file" "$dest"
 fi
 # Delete the original if required
 [ "$deleteOriginalFile" = "yes" ] && rm "$file" && echo "Original file deleted."
