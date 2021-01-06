@@ -6,8 +6,8 @@ export DOCS="$RMGR_ROOT/docs"
 
 # Notes config
 export NOTES="$RMGR_ROOT/notes"
-export TEMPLATES="$NOTES/templates"
-export EXTENSION="md"
+# export TEMPLATES="$NOTES/templates"
+# export EXTENSION="md"
 
 # Database files
 export DB="$RMGR_ROOT/reflist.yaml"
@@ -18,5 +18,5 @@ export HIGHLIGHT_BIBTEX="highlight --syntax=bibtex --out-format=truecolor"
 
 # Programs to use - set these here if you don't have them set elsewhere
 # export EDITOR="vim"
-export PAGER="less"
+# export PAGER="less"
 # export READER="zathura"
