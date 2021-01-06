@@ -8,8 +8,9 @@ sed
 awk
 cut
 jq
-curl
-iconv
+nl (to number lines and present menus)
+curl (to query crossref)
+iconv (to remove diacritics from entry keys)
 pdfinfo
 pdftotext
 pandoc-citeproc
