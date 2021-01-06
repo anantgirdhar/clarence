@@ -19,6 +19,7 @@ $(getbjval authorlist "$bibjson" | sed 's/^/    /' || echo " # there was an erro
   - type: techreport
   - read_status: unread  # Set to read / unread
   - tags:  # Enter a list of tags
+  - keywords:  # Enter a list of keywords
   - projects:  # Enter a list of projects
   - reading_folder:  # Enter a string without spaces
   - category:  # Enter a string without spaces
