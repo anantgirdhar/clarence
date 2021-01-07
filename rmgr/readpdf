@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# Read a specific pdf file given a key
+
+PrintUsage() {
+  cat << EOF
+Usage: $(basename $0) <key>
+
+Open the pdf that matches a specific key.
+
+The key can be piped in or provided as an argument (takes precedence).
+
+Error codes:
+- 0: success
+- 1: insufficient arguments
+- 2: file does not exist
+EOF
+}
+
+##### MAIN #####
+
+key="$1"
+if [ -z "$key" ]; then
+  [ ! -t 0 ] && key=$(</dev/stdin)
+  [ -z "$key" ] && PrintUsage && exit 1
+fi
+
+# Get the type of record
+entryType=$(key2record "$key" | getyamlval 'type')
+
+# Create the filepath
+filename=$(echo "$key" | sed 's/-/_/').pdf
+filepath="$DOCS/$entryType/$filename"
+
+# Verify the file exists and open it if it does
+if [ ! -f "$filepath" ]; then
+  echo "File ($filepath) does not exist."
+  exit 2
+fi
+
+$READER "$filepath"

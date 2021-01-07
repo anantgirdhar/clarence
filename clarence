@@ -15,6 +15,7 @@ Command list:
 - searchkey: Search for a key in the database
 - key2record: Get the full record for the specified key
 - searchdb: Search the db for a record
+- readpdf: Read a pdf
 EOF
 }
 
@@ -54,6 +55,7 @@ case "$cmd" in
   "searchkey") searchkey "$@" ;;
   "key2record") key2record "$@" ;;
   "searchdb") searchdb "$@" ;;
+  "readpdf") readpdf "$@" ;;
   "genkey") genkey "$@" ;;
   *) PrintUsage && exit 1 ;;
 esac
