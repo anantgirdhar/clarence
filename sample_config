@@ -3,6 +3,7 @@
 # Document config
 export RMGR_ROOT="$XDG_DATA_HOME/rmgr"
 export DOCS="$RMGR_ROOT/docs"
+export READ_DIRS="$HOME/docs/clarence"
 
 # Notes config
 export NOTES="$RMGR_ROOT/notes"

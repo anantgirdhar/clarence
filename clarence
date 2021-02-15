@@ -59,5 +59,6 @@ case "$cmd" in
   "readpdf") readpdf "$@" ;;
   "editnote") editnote "$@" ;;
   "genkey") genkey "$@" ;;
+  "update_read_dirs") update_reading_folders ;;
   *) PrintUsage && exit 1 ;;
 esac

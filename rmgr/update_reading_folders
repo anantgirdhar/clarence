@@ -1,0 +1,40 @@
+#!/bin/sh
+
+# Update reading folders
+# Put all pdfs that have been tagged with a specific reading folder into the
+# appropriate folder. Also remove all files that no longer need to be in a
+# folder.
+
+##### MAIN #####
+
+# Get a list of all the reading folders
+readingFoldersList=$(cat "$DB" | sed -En 's/^  - reading_folder: (.*)$/\1/ p' | sort | uniq)
+
+# Ensure that the reading directory exists
+[ ! -d "$READ_DIRS" ] && mkdir -p "$READ_DIRS"
+
+# Clear out all the sub reading directories
+rm -rf "$READ_DIRS/*"
+
+# Deflate the YAML file
+# It seems reasonable to assume that "~~" won't ever appear in a record
+collapsedRecords=$(cat "$DB" | sed -E 's/(.+)$/\1~~/' | sed -E 's/^-/~~~-/' | tr -d '\n' | sed 's/~~~/\n/g' | sed '/^$/ d')
+
+# Create each reading sub directory one at a time
+echo "$readingFoldersList" | while read dir; do
+  # Get the documents that need to be in this directory
+  results=$(echo "$collapsedRecords" | grep -E -- "- reading_folder: $dir")
+  # Inflate the YAML results
+  results=$(echo "$results" | sed 's/~~/\n/g')
+  # Get the keys
+  keyList=$(echo "$results" | grep '^-' | sed -E 's/-\s*(.*):/\1/')
+  # Get the documents corresponding to these keys and move them to the
+  # appropriate reading folder
+  mkdir -p "$READ_DIRS/$dir"
+  while read key; do
+    entryType=$(key2record "$key" | getyamlval 'type')
+    filename=$(echo "$key" | sed 's/-/_/').pdf
+    filepath="$DOCS/$entryType/$filename"
+    cp "$filepath" "$READ_DIRS/$dir/"
+  done <<< "$keyList"
+done
