@@ -17,6 +17,7 @@ Command list:
 - searchdb: Search the db for a record
 - readpdf: Read a pdf
 - editnote: Edit a note
+- update_read_dirs: Update reading directories
 EOF
 }
 
