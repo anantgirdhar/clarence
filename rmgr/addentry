@@ -20,11 +20,11 @@ PreventKeyCollisions() {
   exitCode="$?"
   matchedKeys=$(echo "$matchedKeys" | uniq | sort)
   case "$exitCode" in
-    1) 
+    1)
       # An argument was missing. But we did specify a key (otherwise this
       # script should have stopped before this point).
       echo "Spooky error." && exit 42 ;;
-    2) 
+    2)
       # Key not found. Can safely add this record.
       echo "$key" && exit 0 ;;
     *)
@@ -34,7 +34,7 @@ PreventKeyCollisions() {
       exec 1>/dev/tty
       echo "WARNING: Key collision. Do any of the following records match?"
       while IFS=" " read -r matchedKey; do
-        $APP key2record "$matchedKey" | $HIGHLIGHT_YAML
+        $APP key2record -s "$matchedKey" | $HIGHLIGHT_YAML
         exec 8<&0
         exec 0</dev/tty
         read -p "Does this match whatever you're trying to add? [y|N] " response

@@ -60,7 +60,7 @@ PreventKeyCollisions() {
       exec 1>/dev/tty
       echo "Key collision. Do any of the following records match?"
       while IFS=" " read -r matchedKey; do
-        $APP key2record "$matchedKey" | $HIGHLIGHT_YAML
+        $APP key2record -s "$matchedKey" | $HIGHLIGHT_YAML
         exec 8<&0
         exec 0</dev/tty
         read -p "Does this match whatever you're trying to add? [y|N] " response
