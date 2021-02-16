@@ -1,5 +1,6 @@
 VERSION = 1.0
 PREFIX = /usr/local
+COMPLETIONS_PREFIX=/usr/local/share/zsh/completions
 
 MAIN = clarence
 RMGR = rmgr
@@ -12,8 +13,11 @@ install: $(RMGR)/* $(UTILS)
 	cp -rf $(RMGR) $(PREFIX)/bin
 	cp -f $(UTILS) $(PREFIX)/bin
 	cp -f $(MAIN) $(PREFIX)/bin
+	mkdir -p $(COMPLETIONS_PREFIX)
+	cp -f `pwd`/autocompletions/zsh $(COMPLETIONS_PREFIX)/_$(MAIN)
 
 uninstall:
+	rm -f $(COMPLETIONS_PREFIX)/_$(MAIN)
 	rm -f $(PREFIX)/bin/$(MAIN)
 	rm -rf $(PREFIX)/bin/$(RMGR)
 	for f in $(UTILS); do \
@@ -27,8 +31,11 @@ debug: $(RMGR)/* $(UTILS)
 		ln -s `pwd`/$$f $(PREFIX)/bin/; \
 	done
 	ln -s `pwd`/$(MAIN) $(PREFIX)/bin
+	mkdir -p $(COMPLETIONS_PREFIX)
+	ln -s `pwd`/autocompletions/zsh $(COMPLETIONS_PREFIX)/_$(MAIN)
 
 cleandebug:
+	rm -f $(COMPLETIONS_PREFIX)/_$(MAIN)
 	rm -f $(PREFIX)/bin/$(MAIN)
 	rm -f $(PREFIX)/bin/$(RMGR)
 	for f in $(UTILS); do \
