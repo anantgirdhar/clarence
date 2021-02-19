@@ -24,7 +24,7 @@ EOF
 ##### MAIN #####
 
 # Setup the environment
-CONFDIR="$XDG_CONFIG_HOME/clarence"
+export CONFDIR="$XDG_CONFIG_HOME/clarence"
 [ ! -d "$CONFDIR" ] && echo "Config directory missing." && exit 99
 export RCFILE="$CONFDIR/rc"
 [ ! -f "$RCFILE" ] && echo "Config missing." && exit 99
@@ -35,6 +35,7 @@ source "$RCFILE"
 [ ! -f "$DB" ] && echo "Database ($DB) missing." && exit 98
 [ ! -d "$DOCS" ] && echo "$""DOCS ($DOCS) not a directory." && exit 98
 [ ! -d "$NOTES" ] && echo "$""NOTES  ($NOTES) not a directory." && exit 98
+[ ! -f "$CONFDIR/notes_template.md" ] && echo "Notes template ($CONFDIR/notes_template.md) missing." && exit 98
 
 # Create an alias for the main program name (so that it can be used within the
 # subcommand scripts).
