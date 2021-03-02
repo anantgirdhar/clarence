@@ -4,12 +4,16 @@
 
 PrintUsage() {
   cat << EOF
-Usage: $(basename $0) <BibJSON>
+Usage: $(basename $0) [-m] [<BibJSON>]
 
 Take a BibJSON entry and add it to the database.
 
 The BibJSON entry can be provided as an argument or via stdin. Command line
 arguments take precedence over data piped in.
+
+The '-m' flag takes precedence over the BibJSON entry. If provided, this will
+require the user to create a manual entry, i.e., enter all relevant fields into
+a pre-existing template.
 EOF
 }
 
@@ -60,22 +64,26 @@ if [ -z "$bibjson" ]; then
   [ -z "$bibjson" ] && PrintUsage && exit 1
 fi
 
-# Extract information from BibJSON
-key=$(genkey "$bibjson")
+if [ "$bibjson" = "-m" ]; then
+  key=$(_CreateManualEntry)
+else
+  # Extract information from BibJSON
+  key=$(genkey "$bibjson")
 
-[ -z "$key" ] && exit 2
+  [ -z "$key" ] && exit 2
 
-# Check if entry already exists (by checking for the key in the database)
-key=$(PreventKeyCollisions "$key" "$bibjson")
-exitStatus="$?"
-if [ "$exitStatus" != "0" ]; then
-  # Something went wrong and $key should have the error message
-  echo "$key"
-  exit "$exitStatus"
+  # Check if entry already exists (by checking for the key in the database)
+  key=$(PreventKeyCollisions "$key" "$bibjson")
+  exitStatus="$?"
+  if [ "$exitStatus" != "0" ]; then
+    # Something went wrong and $key should have the error message
+    echo "$key"
+    exit "$exitStatus"
+  fi
+
+  # Create new entry (or exit with the appropriate error code)
+  key=$(_CreateNewEntry "$key" "$bibjson" || exit $?)
 fi
-
-# Create new entry (or exit with the appropriate error code)
-key=$(_CreateNewEntry "$key" "$bibjson" || exit $?)
 
 # Leave the key on stdout
 echo "$key"
