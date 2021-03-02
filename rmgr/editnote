@@ -48,11 +48,11 @@ _UpdateMetaData() {
   key="$1"
   filepath="$2"
   # Get the metadata from the file
-  newMetadata=$(sed -n '/---/,/\.\.\./p' "$filepath" | head -n-1 | tail -n+2)
+  newMetadata=$(sed -n '/^---$/,/^\.\.\.$/p' "$filepath" | head -n-1 | tail -n+2)
   # Update the metadata
   _updateRecord "$key" "$newMetadata"
   # Remove the metadata from the file
-  sed -i '/---/,/\.\.\./d' "$filepath"
+  sed -i '/^---$/,/^\.\.\.$/d' "$filepath"
   sed -i '/./,$!d' "$filepath"
 }
 
