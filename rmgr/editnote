@@ -1,0 +1,106 @@
+#!/bin/sh
+
+# Edit the note associated with a key
+
+PrintUsage() {
+  cat << EOF
+Usage: $(basename $0) <key>
+
+Open the note that matches a specific key in an editor.
+
+The key can be piped in or provided as an argument (takes precedence).
+
+Error codes:
+- 0: success
+- 1: insufficient arguments
+EOF
+}
+
+_EngenderFile() {
+  key="$1"
+  filepath="$2"
+  # Get the metadata for this record
+  metadata=$($APP key2record "$key")
+  if [ -f "$filepath" ]; then
+    # Just add the metadata at the top of the file
+    #TODO: Remove this: cp "$filepath" "$filepath".bk
+    cat \
+      <(echo '---') \
+      <(echo "$metadata") \
+      <(echo '...') \
+      <(echo) \
+      "$filepath" \
+      > "$filepath".tmp
+    mv "$filepath".tmp "$filepath"
+  else
+    # Create the file based on the template
+    cat \
+      <(echo '---') \
+      <(echo "$metadata") \
+      <(echo '...') \
+      <(echo) \
+      "$CONFDIR/notes_template.md" \
+      > "$filepath"
+  fi
+}
+
+_UpdateMetaData() {
+  key="$1"
+  filepath="$2"
+  # Get the metadata from the file
+  newMetadata=$(sed -n '/^---$/,/^\.\.\.$/p' "$filepath" | head -n-1 | tail -n+2)
+  # Update the metadata
+  _updateRecord "$key" "$newMetadata"
+  # Remove the metadata from the file
+  sed -i '/^---$/,/^\.\.\.$/d' "$filepath"
+  sed -i '/./,$!d' "$filepath"
+}
+
+_RemoveFileIfEmpty() {
+  key="$1"
+  filepath="$2"
+  # Compare the file with the template and if they are the same then remove the
+  # file.
+  # Before comparing, remove placeholder tags and all blank lines. This should
+  # help check if there is any content in a section or if any headers have been
+  # removed.
+  if diff \
+    <(sed 's/<++>// ; /^$/d' "$filepath") \
+    <(sed 's/<++>// ; /^$/d' "$CONFDIR/notes_template.md") \
+    >/dev/null; then
+    # There are no notes
+    # Remove the file
+    rm "$filepath"
+  fi
+}
+
+##### MAIN #####
+
+key="$1"
+if [ -z "$key" ]; then
+  [ ! -t 0 ] && key=$(</dev/stdin)
+  [ -z "$key" ] && PrintUsage && exit 1
+fi
+
+# Get the type of record
+entryType=$(key2record "$key" | getyamlval 'type')
+
+# Create the filepath
+filename=$(echo "$key" | sed 's/-/_/').md
+filepath="$NOTES/$entryType/$filename"
+
+# If the directory does not exist, create it
+dir=$(dirname "$filepath")
+[ ! -d "$dir" ] && mkdir -p "$dir"
+
+# Create file based on template
+_EngenderFile "$key" "$filepath"
+
+# Allow user to add stuff in - either in metadata or data
+$EDITOR "$filepath"
+
+# On saving, strip metadata and update
+_UpdateMetaData "$key" "$filepath"
+
+# If there is no actual data, delete the file
+_RemoveFileIfEmpty "$key" "$filepath"

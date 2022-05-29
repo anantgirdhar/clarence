@@ -1,0 +1,133 @@
+#!/bin/sh
+
+# Add a file to the database
+
+PrintUsage() {
+  cat << EOF
+Usage: $(basename $0) [options] <file>
+
+Take a file and copy it into the appropriate folder in the database. Currently,
+only PDF files are supported.
+
+Attempt to figure out what the document is (query crossref or something).
+
+Options:
+  -d: delete the original file after copying
+EOF
+}
+
+GetDOI() {
+  file="$1"
+  doi=$(pdf2doi "$file")
+  if [ -z "$doi" ]; then
+    exec 9<>/dev/stdout
+    exec 1<>/dev/tty
+    echo "Unable to auto-detect DOI number."
+    read -p "Enter manual search terms: " searchTerms
+    exec 1<&9
+    doi=$(querycr "$searchTerms")
+  fi
+  [ -z "$doi" ] && exit 2
+  echo "$doi" && exit 0
+}
+
+GenerateEntry() {
+  doi="$1"
+  if [ -z "$doi" ]; then
+    exec 9<>/dev/stdout
+    exec 1<>/dev/tty
+    echo "Unable to acquire DOI number. Enter information manually."
+    exec 1<&9
+    key=$(_CreateManualEntry)
+  else
+    bibjson=$(doi2bibjson "$doi")
+    if [ -z "$bibjson" ]; then
+      exec 9<>/dev/stdout
+      exec 1<>/dev/tty
+      echo "Unable to get the BibJSON. Enter manually."
+      exec 1<&9
+      key=$(_CreateManualEntry)
+    else
+      key=$(addentry "$bibjson")
+    fi
+  fi
+  echo "$key"
+}
+
+CopyFile() {
+  src="$1"
+  dest="$2"
+  # Make sure that the destination directory exists
+  dir=$(dirname "$dest")
+  [ ! -d "$dir" ] && mkdir -p "$dir"
+  cp "$src" "$dest"
+  echo "File copied."
+}
+
+##### MAIN #####
+
+# Set default options
+deleteOriginalFile="no"
+
+# Parse options
+[ "$1" = "-d" ] && deleteOriginalFile="yes" && shift
+
+file="$1"
+[ ! -f "$file" ] && PrintUsage && exit 1
+
+# Setup the preview
+$READER "$file" &
+previewPID="$!"
+EndSafely() {
+  kill "$previewPID"
+}
+trap "EndSafely" SIGINT
+
+# Try to generate the entry that should accompany this file
+doi=$(GetDOI "$file")
+key=$(GenerateEntry "$doi")
+
+# Make sure that there is a key for the entry that was just generated
+if [ -z "$key" ]; then
+  echo "Something went wrong in GenerateEntry." >&2
+  EndSafely
+  exit 4
+fi
+
+# Get the entry type
+entryType=$(key2record "$key" | getyamlval "type")
+if [ -z "$entryType" ]; then
+  echo "Something went wrong while retrieving the type." >&2
+  EndSafely
+  exit 4
+fi
+
+# Move the file to the appropriate location
+# But first create a new name for the file that matches the key
+dest=$(echo "$key" | sed 's/-/_/')
+if [ -z "$dest" ]; then
+  echo "No destination filename was set. Not moving file." >&2
+  EndSafely
+  exit 4
+fi
+dest="$DOCS/$entryType/$dest.${file##*.}"
+# Check if the file already exists and move under the appropriate conditions
+exec 9<>/dev/stdout
+exec 1<>/dev/tty
+exec 0</dev/tty
+if [ -f "$dest" ]; then
+  confirmation=
+  while [ "$confirmation" != "y" ] && [ "$confirmation" != "n" ]; do
+    read -p "File already exists. Replace? [y|n]: " confirmation
+  done
+  [ "$confirmation" = "y" ] && CopyFile "$file" "$dest"
+else
+  CopyFile "$file" "$dest"
+fi
+# Delete the original if required
+[ "$deleteOriginalFile" = "yes" ] && rm "$file" && echo "Original file deleted."
+
+# If we've got here, everything went well (hopefully)
+echo "All done."
+EndSafely
+exit 0

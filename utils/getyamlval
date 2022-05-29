@@ -1,0 +1,100 @@
+#!/bin/sh
+
+# Extract the value for a key from a YAML record
+
+PrintUsage() {
+  cat << EOF
+Usage: $(basename $0) [options] <key> <YAML>
+
+Extract the value for a key from a YAML entry.
+
+The YAML can be provided as an argument or can be piped in.
+
+Options:
+  -s <sep>: a separator to use when concatenating a list type field
+            Default: ', '
+EOF
+}
+
+GetSingularField() {
+  fieldName="$1"
+  yaml="$2"
+  extraction=$(echo "$yaml" |\
+    # Find the line with the fieldName
+    grep -- "^\s*- $fieldName: " \
+  )
+  [ -z "$extraction" ] && exit 2
+  echo "$extraction" |\
+    # Remove the fieldName and any spaces at the beginning of the line
+    sed "s/^\s*- $fieldName: //" |\
+    # Remove any spaces at the end of the line
+    sed "s/\s*$//"
+}
+
+GetListField() {
+  fieldName="$1"
+  yaml="$2"
+  sep="$3"  # What separator to use
+  extraction=$(echo "$yaml" |\
+    # Extract the values from the specific field
+    awk "/^\s{0,2}-/ {flag=0} /^  - $fieldName:/ {flag=1} { if(flag) print }" \
+  )
+  [ -z "$extraction" ] && exit 2
+  echo "$extraction" |\
+    # Remove the line that contains the fieldName
+    tail -n +2 |\
+    # Remove all the YAML formatting
+    sed 's/^\s*- //' |\
+    # Concatenate all lines with the fields separated by a +
+    tr '\n' '+' |\
+    # Remove the last +
+    rev | cut -c 2- | rev |\
+    # Replace the +'s with the required separator
+    sed "s/+/$sep/g"
+}
+
+GetFirstAuthor() {
+  GetListField "author" "$1" "+" | cut -f 1 -d '+'
+}
+
+GetKey() {
+ echo "$1" | grep -E "^- .*:" | sed -E "s/^-\s*//" | sed -E "s/\s*:\s*$//"
+}
+
+Dispatcher() {
+  fieldName="$1"
+  yaml="$2"
+  separator="$3"  # What separator to use
+  case "$fieldName" in
+    key) GetKey "$yaml" ;;
+    authorlist) GetListField "author" "$yaml" "$sep" ;;
+    firstauthor) GetFirstAuthor "$yaml" ;;
+    tags) GetListField "$fieldName" "$yaml" "$sep" ;;
+    projects) GetListField "$fieldName" "$yaml" "$sep" ;;
+    *) GetSingularField "$fieldName" "$yaml" ;;
+  esac
+}
+
+##### MAIN #####
+
+# Parse options
+if [ "$1" = "-s" ]; then
+  sep="$2"
+  shift
+  shift
+else
+  sep=", "
+fi
+
+key="$1"
+[ -z "$key" ] && PrintUsage && exit 1
+
+yaml="$2"
+if [ -z "$yaml" ]; then
+  [ ! -t 0 ] && yaml=$(</dev/stdin)
+  [ -z "$yaml" ] && PrintUsage && exit 1
+fi
+
+result=$(Dispatcher "$key" "$yaml")
+
+[ -z "$result" ] && exit 2 || echo "$result"

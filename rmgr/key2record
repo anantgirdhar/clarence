@@ -1,0 +1,74 @@
+#!/bin/sh
+
+# Get the record for a key
+
+PrintUsage() {
+  cat << EOF
+Usage: $(basename $0) [options] <search key>
+
+Search the database for the search key. The key can be piped in or provided as
+an argument (which takes precedence).
+
+Options:
+  -f <comma separated fields>: filter to just these fields
+    If provided after the -s option, this adds fields to that list.
+    If provided before the -s option, it gets overrided by -s.
+  -s: the same as -f key,title,author,year,type,keywords,journal,school
+    Overrides the -f option if provided after it.
+
+Exit codes:
+- 0: success
+- 1: search key not provided
+- 2: no matching keys found
+- 3: multiple matching keys found
+EOF
+}
+
+##### MAIN #####
+
+# Set default for options
+PRINT="full"
+FIELD_LIST=""
+
+# Parse the options
+while true; do
+  case "$1" in
+    "-s")
+      PRINT="summary"
+      FIELD_LIST="title,author,year,type,keywords,journal,school,"
+      shift
+      ;;
+    "-f")
+      PRINT="summary"
+      FIELD_LIST="$FIELD_LIST""$2,"
+      shift
+      shift
+      ;;
+    *) break ;;
+  esac
+done
+
+key="$1"
+if [ -z "$key" ]; then
+  [ ! -t 0 ] && key=$(</dev/stdin)
+  [ -z "$key" ] && PrintUsage && exit 1
+fi
+
+searchResults=$(searchkey "$key")
+exitCode="$?"
+
+if [ "$exitCode" = "0" ] || [ "$exitCode" = "3" ]; then
+  data=$(awk "/^-\s*$key:\s*$/ {flag=1; print "\n"} /^\s*$/ {flag=0} {if(flag) print}" "$DB" | tail -n+2)  # The tail gets rid of the very first newline
+  if [ "$PRINT" = "summary" ]; then
+    # Get the line that has the key
+    output=$(echo "$data" | grep "^-")
+    # Build up the rest of the string based on whichever keys are requested
+    while read -r -d "," field; do
+      output="$output"$(echo "$data" | awk "/^\s{0,2}-/ {flag=0} /^  -\s*$field\s*:/ {flag=1; print "\n"} {if(flag) print}")
+    done <<< "$FIELD_LIST"
+    echo "$output"
+  else
+    echo "$data"
+  fi
+fi
+exit $exitCode

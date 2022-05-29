@@ -1,18 +1,23 @@
 #!/bin/sh
 
 # Document config
-RMGR_ROOT="$XDG_DATA_HOME/rmgr"
-DOCS_ROOT="$RMGR_ROOT/docs"
-ARTICLES="$DOCS_ROOT/articles"
-BOOKS="$DOCS_ROOT/books"
-TECHREPORTS="$DOCS_ROOT/techreports"
-THESES="$DOCS_ROOT/theses"
+export RMGR_ROOT="$XDG_DATA_HOME/rmgr"
+export DOCS="$RMGR_ROOT/docs"
+export READ_DIRS="$HOME/docs/clarence"
 
 # Notes config
-NOTES="$XDG_DATA_HOME/rmgr/notes"
-TEMPLATES="$NOTES/templates"
-EXTENSION="md"
+export NOTES="$RMGR_ROOT/notes"
+# export TEMPLATES="$NOTES/templates"
+# export EXTENSION="md"
 
 # Database files
-BIB="$NOTES/reflist.bib"
-EXT="$NOTES/ext.yaml"
+export DB="$RMGR_ROOT/reflist.yaml"
+
+# If you don't have highlight installed, just set these options to cat
+export HIGHLIGHT_YAML="highlight --syntax=yaml --out-format=truecolor"
+export HIGHLIGHT_BIBTEX="highlight --syntax=bibtex --out-format=truecolor"
+
+# Programs to use - set these here if you don't have them set elsewhere
+# export EDITOR="vim"
+# export PAGER="less"
+# export READER="zathura"

@@ -1,0 +1,57 @@
+#!/bin/sh
+
+# Search every value in a record
+
+PrintUsage() {
+  cat << EOF
+Usage: $(basename $0) [options] <search term>
+
+Search everything in the database and return the records that match.
+
+Options:
+  -k: only return the keys (instead of all the records)
+
+Exit codes:
+- 0: success
+- 1: search key not provided
+- 2: no matching keys found
+EOF
+}
+
+##### MAIN #####
+
+# Set option defaults
+RETURN="full records"
+
+# Parse the options
+while true; do
+  case "$1" in
+    "-k") RETURN="keys only" && shift ;;
+    *) break ;;
+  esac
+done
+
+searchTerm="$1"
+if [ -z "$searchTerm" ]; then
+  [ ! -t 0 ] && searchTerm=$(</dev/stdin)
+  [ -z "$searchTerm" ] && PrintUsage && exit 1
+fi
+
+# Deflate the YAML file
+# It seems reasonable to assume that "~~" won't ever appear in a record
+collapsedRecords=$(cat "$DB" | sed -E 's/(.+)$/\1~~/' | sed -E 's/^-/~~~-/' | tr -d '\n' | sed 's/~~~/\n/g' | sed '/^$/ d')
+
+# Search in the collapsed file
+# Assume that the search term is a regex
+results=$(echo "$collapsedRecords" | grep -i "$searchTerm")
+
+# If there are no results, just exit with the appropriate error code
+[ -z "$results" ] && exit 2
+
+# Inflate the YAML results
+results=$(echo "$results" | sed 's/~~/\n/g')
+if [ "$RETURN" = "keys only" ]; then
+  echo "$results" | grep '^-' | sed -E 's/-\s*(.*):/\1/'
+else  # $RETURN = full records
+  echo "$results"
+fi

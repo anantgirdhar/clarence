@@ -3,7 +3,7 @@
 # Get the BibTeX entry for a DOI number.
 
 PrintUsage() {
-    cat << EOF
+  cat << EOF
 Usage: $(basename $0) <doi>
 
 Query the crossref API to get the BibTeX entry corresponding to the given DOI.
@@ -15,8 +15,8 @@ EOF
 
 doi="$1"
 if [ -z "$doi" ]; then
-    [ ! -t 0 ] && doi=$(</dev/stdin)
-    [ -z "$doi" ] && PrintUsage && exit 1
+  [ ! -t 0 ] && doi=$(</dev/stdin)
+  [ -z "$doi" ] && PrintUsage && exit 1
 fi
 
 curl -s "http://api.crossref.org/works/$doi/transform/application/x-bibtex"

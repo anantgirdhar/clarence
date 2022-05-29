@@ -1,38 +1,45 @@
-VERSION = 0.1
+VERSION = 1.0
 PREFIX = /usr/local
+COMPLETIONS_PREFIX=/usr/local/share/zsh/completions
 
-SRC = rmgr_*
-LOCAL_UTILS = bib2key bib2type doi2bib pdf2doi
-CROSSREF_UTILS = querycr
+MAIN = clarence
+RMGR = rmgr
+UTILS = utils/*
 
 .DEFAULT: install
 
-install: install_src install_local_utils install_crossref_utils
-
-install_src: $(SRC)
+install: $(RMGR)/* $(UTILS)
 	mkdir -p $(PREFIX)/bin
-	cp -f $(SRC) $(PREFIX)/bin
-
-install_local_utils: $(LOCAL_UTILS)
-	mkdir -p $(PREFIX)/bin
-	cp -f $(LOCAL_UTILS) $(PREFIX)/bin
-
-install_crossref_utils: $(CROSSREF_UTILS)
-	mkdir -p $(PREFIX)/bin
-	cp -f $(CROSSREF_UTILS) $(PREFIX)/bin
+	cp -rf $(RMGR) $(PREFIX)/bin
+	cp -f $(UTILS) $(PREFIX)/bin
+	cp -f $(MAIN) $(PREFIX)/bin
+	mkdir -p $(COMPLETIONS_PREFIX)
+	cp -f `pwd`/autocompletions/zsh $(COMPLETIONS_PREFIX)/_$(MAIN)
 
 uninstall:
-	rm $(PREFIX)/bin/$(SRC)
-	for f in $(LOCAL_UTILS); do \
-		rm $(PREFIX)/bin/$$f ; \
-	done
-	for f in $(CROSSREF_UTILS); do \
-		rm $(PREFIX)/bin/$$f ; \
+	rm -f $(COMPLETIONS_PREFIX)/_$(MAIN)
+	rm -f $(PREFIX)/bin/$(MAIN)
+	rm -rf $(PREFIX)/bin/$(RMGR)
+	for f in $(UTILS); do \
+		rm -f $(PREFIX)/bin/$$(basename $$f); \
 	done
 
-.PHONY: \
-	install_src \
-	install_local_utils \
-	install_crossref_utils \
-	install \
-	uninstall
+debug: $(RMGR)/* $(UTILS)
+	mkdir -p $(PREFIX)/bin
+	ln -s `pwd`/$(RMGR) $(PREFIX)/bin
+	for f in $(UTILS); do \
+		ln -s `pwd`/$$f $(PREFIX)/bin/; \
+	done
+	ln -s `pwd`/$(MAIN) $(PREFIX)/bin
+	mkdir -p $(COMPLETIONS_PREFIX)
+	ln -s `pwd`/autocompletions/zsh $(COMPLETIONS_PREFIX)/_$(MAIN)
+
+cleandebug:
+	rm -f $(COMPLETIONS_PREFIX)/_$(MAIN)
+	rm -f $(PREFIX)/bin/$(MAIN)
+	rm -f $(PREFIX)/bin/$(RMGR)
+	for f in $(UTILS); do \
+		rm -f $(PREFIX)/bin/$$(basename $$f); \
+	done
+
+.PHONY: install uninstall debug cleandebug

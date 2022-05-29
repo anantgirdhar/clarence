@@ -1,0 +1,89 @@
+#!/bin/sh
+
+# Add an entry to the database
+
+PrintUsage() {
+  cat << EOF
+Usage: $(basename $0) [-m] [<BibJSON>]
+
+Take a BibJSON entry and add it to the database.
+
+The BibJSON entry can be provided as an argument or via stdin. Command line
+arguments take precedence over data piped in.
+
+The '-m' flag takes precedence over the BibJSON entry. If provided, this will
+require the user to create a manual entry, i.e., enter all relevant fields into
+a pre-existing template.
+EOF
+}
+
+PreventKeyCollisions() {
+  key="$1"
+  bibjson="$2"
+  matchedKeys=$($APP searchkey -p "$key")
+  exitCode="$?"
+  matchedKeys=$(echo "$matchedKeys" | uniq | sort)
+  case "$exitCode" in
+    1)
+      # An argument was missing. But we did specify a key (otherwise this
+      # script should have stopped before this point).
+      echo "Spooky error." && exit 42 ;;
+    2)
+      # Key not found. Can safely add this record.
+      echo "$key" && exit 0 ;;
+    *)
+      # Match(es) found. Time to get some user input.
+      # echo "Dev this." && exit 100
+      exec 9<>/dev/stdout
+      exec 1>/dev/tty
+      echo "WARNING: Key collision. Do any of the following records match?"
+      while IFS=" " read -r matchedKey; do
+        $APP key2record -s "$matchedKey" | $HIGHLIGHT_YAML
+        exec 8<&0
+        exec 0</dev/tty
+        read -p "Does this match whatever you're trying to add? [y|N] " response
+        exec 0<&8
+        [ -z "$response" ] && response="n"
+        [ "$response" = "y" ] && exec 1<&9 && echo "$matchedKey" && exit 3
+      done <<< "$matchedKeys"
+      # If we get here, the user intends to add this new record to the
+      # database. Create a new key (by appending an extra character).
+      # Just make sure to reset stdout so that the output can be picked up by
+      # the script.
+      exec 1<&9
+      genkey -u "$bibjson" && exit 0
+      ;;
+  esac
+}
+
+##### MAIN #####
+
+bibjson="$1"
+if [ -z "$bibjson" ]; then
+  [ ! -t 0 ] && bibjson=$(</dev/stdin)
+  [ -z "$bibjson" ] && PrintUsage && exit 1
+fi
+
+if [ "$bibjson" = "-m" ]; then
+  key=$(_CreateManualEntry)
+else
+  # Extract information from BibJSON
+  key=$(genkey "$bibjson")
+
+  [ -z "$key" ] && exit 2
+
+  # Check if entry already exists (by checking for the key in the database)
+  key=$(PreventKeyCollisions "$key" "$bibjson")
+  exitStatus="$?"
+  if [ "$exitStatus" != "0" ]; then
+    # Something went wrong and $key should have the error message
+    echo "$key"
+    exit "$exitStatus"
+  fi
+
+  # Create new entry (or exit with the appropriate error code)
+  key=$(_CreateNewEntry "$key" "$bibjson" || exit $?)
+fi
+
+# Leave the key on stdout
+echo "$key"
