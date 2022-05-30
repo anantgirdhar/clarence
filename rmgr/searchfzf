@@ -35,13 +35,14 @@ resultKeysRegex=$( \
   _deflateYaml |\
   fzf \
     --ansi --exact -i --multi \
-    --header="$(printf "^f: Filter  ^r: Reload\n^u/d: Scroll preview\n?: Reduced preview  ^p: Full preview")" \
+    --header="$(printf "^f: Filter  ^r: Refresh\n^u/d: Scroll preview\n?: Reduced preview  ^p: Full preview")" \
     --preview 'echo {} | _extractKeyRegex | _extractFullRecords | _inflateYaml | bat -l yaml --decorations never --color always' \
     --preview-window=wrap \
     --bind '?:change-preview:echo {} | _inflateYaml | bat -l yaml --decorations never --color always' \
     --bind 'ctrl-p:change-preview:echo {} | _extractKeyRegex | _extractFullRecords | _inflateYaml | bat -l yaml --decorations never --color always' \
     --bind 'ctrl-u:preview-up' \
     --bind 'ctrl-d:preview-down' \
+    --bind "ctrl-r:select-all+reload(cat {+f} | _extractKeyRegex | _extractFullRecords)+clear-query" \
     --bind "ctrl-f:execute(_pickFields > $currentFilters)+select-all+reload(cat {+f} | _extractKeyRegex | _extractFullRecords | _inflateYaml | _extractFields -f $currentFilters | _deflateYaml)+clear-query" |\
   _extractKeyRegex)
 
