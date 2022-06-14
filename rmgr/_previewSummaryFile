@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Preview a summary file
+
+SplitAndPreview() {
+  BATCMD="bat --decorations never --color always"
+  sed -n '/^---$/,/^...$/p' "$1" | $BATCMD -l yaml
+  sed '/^---$/,/^...$/d' "$1" | $BATCMD -l md
+}
+
+SearchSplitAndPreview() {
+  BATCMD="bat --decorations never --color always"
+  sed -n '/^---$/,/^...$/p' "$1" \
+    | grep --ignore-case --color=always -E "$2|$" \
+    | $BATCMD -l yaml
+  sed '/^---$/,/^...$/d' "$1" \
+    | grep --ignore-case --color=always -E "$2|$" \
+    | $BATCMD -l md
+}
+
+##### MAIN #####
+
+path="$1"
+argType="$2"
+searchTerm="$3"
+
+case "$argType" in
+  "full_ripgrep") path=$(echo "$path" | cut -d ':' -f 1) ;;
+  *) ;;
+esac
+
+[ ! -f "$path" ] && echo "$path is not a file" && exit 1
+
+[ -z "$searchTerm" ] \
+  && SplitAndPreview "$path" \
+  || SearchSplitAndPreview "$path" "$searchTerm"

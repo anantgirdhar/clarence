@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# Find a summary note
+
+PrintUsage() {
+  cat << EOF
+Usage: $(basename $0) [note_name]
+
+Find and edit a summary note.
+
+Summary notes can summarize a group of papers, a topic, or whatever else you
+want to summarize.
+EOF
+}
+
+##### MAIN #####
+
+[ ! -d "$SUMMARIES" ] && exit 1
+
+cd "$SUMMARIES"
+
+# Find the note to append to
+RGP="rg --column --line-number --no-heading --color=always --smart-case"
+note_line=$(FZF_DEFAULT_COMMAND="$RGP ''" \
+  fzf --prompt="Search > " \
+    --ansi -i \
+    --query="$1" \
+    --header="$(printf "Ctrl+p: toggle preview\nCtrl+u/d: scroll preview")" \
+    --border="rounded" \
+    --bind "change:reload:$RGP {q} . || true" \
+    --bind "ctrl-p:toggle-preview" \
+    --bind "ctrl-u:preview-up" \
+    --bind "ctrl-d:preview-down" \
+    --preview="_previewSummaryFile {} full_ripgrep {q}" \
+    --preview-window=wrap
+)
+
+[ -z "$note" ] && exit 1
+
+# Force the correct extension on to the file
+extension=$(echo "${note##*.}" | tr '[:upper:]' '[:lower:]')
+[ "$extension" = "md" ] || note="$(basename "$note").md"
+
+fullPath="$SUMMARIES/$note"
+[ ! -f "$fullPath" ] && template="$CONFDIR/summary_template.md" || template=""
+
+# Copy the template and open the note (with some enhancements based on the editor)
+case "$EDITOR" in
+  "vim")
+    # Open a new buffer and read in the template within vim instead of copying
+    # it over. This means taht there isn't an empty file sitting around if the
+    # user doesn't choose to write it.
+    [ -f "$template" ] && \
+      $EDITOR -c "read "$template" | cd %:p:h" "$fullPath" || \
+      $EDITOR -c "cd %:p:h" "$fullPath"
+    ;;
+  *)
+    # Just copy the template file over before opening
+    [ -f "$template" ] && cp "$template" "$fullPath"
+    $EDITOR "$fullPath"
+    ;;
+esac

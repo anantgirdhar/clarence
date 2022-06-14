@@ -7,6 +7,7 @@ export READ_DIRS="$HOME/docs/clarence"
 
 # Notes config
 export NOTES="$RMGR_ROOT/notes"
+export SUMMARIES="$NOTES/summaries"
 # export TEMPLATES="$NOTES/templates"
 # export EXTENSION="md"
 
