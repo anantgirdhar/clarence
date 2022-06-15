@@ -1,0 +1,14 @@
+#!/bin/sh
+
+IGNORE_FIELDS="date_added|doi|howpublished|ISBN|ISSN|month|pages|url|volume"
+
+cat "$DB" |\
+  grep -Po '^  - (.+?):' |\
+  sed -E 's/^  - (.+):/\1/' |\
+  sort |\
+  uniq |\
+  grep -Ev "$IGNORE_FIELDS" |\
+  fzf --ansi -i --multi \
+    --header="$(printf "^a: Select all  Tab: Select item")" \
+    --bind 'ctrl-a:select-all' \
+    --bind 'tab:select+clear-query'

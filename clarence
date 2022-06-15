@@ -15,6 +15,7 @@ Command list:
 - searchkey: Search for a key in the database
 - key2record: Get the full record for the specified key
 - searchdb: Search the db for a record
+- searchfzf: Fuzzy search the db for records
 - readpdf: Read a pdf
 - editnote: Edit a note
 - update_read_dirs: Update reading directories
@@ -60,6 +61,7 @@ case "$cmd" in
   "searchkey") searchkey "$@" ;;
   "key2record") key2record "$@" ;;
   "searchdb") searchdb "$@" ;;
+  "searchfzf") searchfzf "$@" ;;
   "readpdf") readpdf "$@" ;;
   "editnote") editnote "$@" ;;
   "genkey") genkey "$@" ;;

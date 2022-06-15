@@ -1,0 +1,59 @@
+#!/bin/sh
+
+# Search every value in a record
+
+PrintUsage() {
+  cat << EOF
+Usage: $(basename $0) [options]
+
+Use a fuzzy finder to search the database and return the records that match.
+
+Options:
+  -k: only return the keys (instead of all the records)
+  -h: print this help
+EOF
+}
+
+##### MAIN #####
+
+# Set option defaults
+RETURN="full records"
+
+# Parse the options
+while [ ! -z "$1" ]; do
+  case "$1" in
+    "-k") RETURN="keys only" && shift ;;
+    "-h") PrintUsage && exit 0 ;;
+    *) PrintUsage && exit 1 ;;
+  esac
+done
+
+currentFilters=$(mktemp --tmpdir=/tmp activeFilter_XXX.clarence)
+
+resultKeysRegex=$( \
+  cat "$DB" |\
+  _deflateYaml |\
+  fzf \
+    --ansi --exact -i --multi \
+    --header="$(printf "^f: Filter  ^r: Refresh\n^u/d: Scroll preview\n?: Reduced preview  ^p: Full preview")" \
+    --preview 'echo {} | _extractKeyRegex | _extractFullRecords | _inflateYaml | bat -l yaml --decorations never --color always' \
+    --preview-window=wrap \
+    --bind '?:change-preview:echo {} | _inflateYaml | bat -l yaml --decorations never --color always' \
+    --bind 'ctrl-p:change-preview:echo {} | _extractKeyRegex | _extractFullRecords | _inflateYaml | bat -l yaml --decorations never --color always' \
+    --bind 'ctrl-u:preview-up' \
+    --bind 'ctrl-d:preview-down' \
+    --bind "ctrl-r:select-all+reload(cat {+f} | _extractKeyRegex | _extractFullRecords)+clear-query" \
+    --bind "ctrl-f:execute(_pickFields > $currentFilters)+select-all+reload(cat {+f} | _extractKeyRegex | _extractFullRecords | _inflateYaml | _extractFields -f $currentFilters | _deflateYaml)+clear-query" |\
+  _extractKeyRegex)
+
+rm "$currentFilters"
+
+# If there are no results, just exit with the appropriate error code
+[ -z "$resultKeysRegex" ] && exit 2
+
+# Return the results as requested
+if [ "$RETURN" = "keys only" ]; then
+  echo "$resultKeysRegex" | sed -E 's/|/\n/'
+else  # $RETURN =  "full records"
+  echo "$resultKeysRegex" | _extractFullRecords | _inflateYaml
+fi
