@@ -8,8 +8,9 @@ Usage: $(basename $0) [options]
 
 Use a fuzzy finder to search the database and return the records that match.
 
-Options:
+Options (using multiple options might have unintended side effects):
   -k: only return the keys (instead of all the records)
+  -m: markdown mode - return multiple keys based on the pandoc markdown spec
   -h: print this help
 EOF
 }
@@ -23,6 +24,7 @@ RETURN="full records"
 while [ ! -z "$1" ]; do
   case "$1" in
     "-k") RETURN="keys only" && shift ;;
+    "-m") RETURN="markdown mode" && shift ;;
     "-h") PrintUsage && exit 0 ;;
     *) PrintUsage && exit 1 ;;
   esac
@@ -53,7 +55,9 @@ rm "$currentFilters"
 
 # Return the results as requested
 if [ "$RETURN" = "keys only" ]; then
-  echo "$resultKeysRegex" | sed -E 's/|/\n/'
+  echo "$resultKeysRegex" | sed -E 's/\|/\n/g'
+elif [ "$RETURN" = "markdown mode" ]; then
+  echo "@$resultKeysRegex" | sed -E 's/\|/; @/g'
 else  # $RETURN =  "full records"
   echo "$resultKeysRegex" | _extractFullRecords | _inflateYaml
 fi
