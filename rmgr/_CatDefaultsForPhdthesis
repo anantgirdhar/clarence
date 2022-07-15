@@ -30,4 +30,5 @@ $(getbjval authorlist "$bibjson" | sed 's/^/    /' || echo " # there was an erro
   - ISSN: $(getbjval ISSN "$bibjson" || echo " # there was an error (#$?) reading this")
   - ISBN: $(getbjval ISBN "$bibjson" || echo " # there was an error (#$?) reading this")
   - date_added: $(date "+%Y-%m-%d %H:%M:%S %Z %:::z")  # DO NOT EDIT
+  - date_updated: $(date "+%Y-%m-%d %H:%M:%S %Z %:::z")  # DO NOT EDIT
 EOF

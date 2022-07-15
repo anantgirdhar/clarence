@@ -26,4 +26,5 @@ $(getbjval authorlist "$bibjson" | sed 's/^/    /' || echo " # there was an erro
   - category:  # Enter a string without spaces
   - note:  # Enter a string
   - date_added: $(date "+%Y-%m-%d %H:%M:%S %Z %:::z")  # DO NOT EDIT
+  - date_updated: $(date "+%Y-%m-%d %H:%M:%S %Z %:::z")  # DO NOT EDIT
 EOF
