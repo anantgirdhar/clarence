@@ -13,6 +13,8 @@ A simple tool to manage a reading list / academic references offline.
 - iconv (to remove diacritics from entry keys)
 - pdfinfo
 - pdftotext
+- fzf
+- bat (for syntax highlighting)
 - pandoc-citeproc
 
 ## Installation
