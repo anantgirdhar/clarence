@@ -79,6 +79,7 @@ _RemoveFileIfEmpty() {
 key="$1"
 if [ -z "$key" ]; then
   [ ! -t 0 ] && key=$(</dev/stdin)
+  [ -z "$key" ] && key=$(clarence searchfzf -k)
   [ -z "$key" ] && PrintUsage && exit 1
 fi
 
