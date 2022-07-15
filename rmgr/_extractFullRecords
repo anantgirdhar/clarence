@@ -1,0 +1,7 @@
+#!/bin/sh
+
+keyregex=$(cat /dev/stdin)
+
+cat "$DB" |\
+  _deflateYaml |\
+  grep -E "^- ($keyregex):"
