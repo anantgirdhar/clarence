@@ -24,6 +24,7 @@ GetDetails() {
       title: .title[],
       author: [.author[]? | .given? + \" \" + .family?],
       year: .[\"published-print\"][\"date-parts\"][0],
+      type: .type,
     }"
 }
 
