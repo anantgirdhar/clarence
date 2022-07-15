@@ -20,6 +20,7 @@ _clarence() {
         searchkey) _arguments "*:keys:(($(_getAllKeys)))" ;;
         readpdf) _arguments "*:keys:(($(_getAllKeys)))" ;;
         editnote) _arguments "*:keys:(($(_getAllKeys)))" ;;
+        addfile) _arguments "*:files:_files" ;;
         *) ;;
       esac
   esac
