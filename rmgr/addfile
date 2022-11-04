@@ -40,7 +40,7 @@ GenerateEntry() {
     exec 1<&9
     key=$(_CreateManualEntry)
   else
-    bibjson=$(doi2bibjson "$doi")
+    bibjson=$(doi2bibjson -n "$doi")
     if [ -z "$bibjson" ]; then
       exec 9<>/dev/stdout
       exec 1<>/dev/tty
