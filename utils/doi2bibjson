@@ -4,14 +4,22 @@
 
 PrintUsage() {
   cat << EOF
-Usage: $(basename $0) <doi>
+Usage: $(basename $0) [options] <doi>
 
 Query the crossref API to get the BibJSON entry corresponding to the given DOI.
 
 The DOI can be provided as an argument or via stdin. Command line arguments
 take precendence over data piped in.
+
+Options:
+-n: no references (remove the list of references)
 EOF
 }
+
+REMOVE_REFERENCES="no"
+case "$1" in
+  "-n") REMOVE_REFERENCES="yes" && shift ;;
+esac
 
 doi="$1"
 if [ -z "$doi" ]; then
@@ -19,4 +27,8 @@ if [ -z "$doi" ]; then
   [ -z "$doi" ] && PrintUsage && exit 1
 fi
 
-curl -s "http://api.crossref.org/works/$doi" | jq -r '.message'
+if [ "$REMOVE_REFERENCES" = "yes" ]; then
+  curl -s "http://api.crossref.org/works/$doi" | jq -r '.message' | jq -r 'del(.reference)'
+else
+  curl -s "http://api.crossref.org/works/$doi" | jq -r '.message'
+fi
