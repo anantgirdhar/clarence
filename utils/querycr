@@ -63,6 +63,8 @@ while true; do
     searchTerms=$(echo "$searchTerms" | sed 's/ /%20/g')
     CROSSREF_URL="https://api.crossref.org/works?query.bibliographic=$searchTerms&sort=score&order=desc"
     response=$(curl --silent "$CROSSREF_URL")
+    # Clean the control characters (new lines) that might be in the response
+    response=$(echo "$response>>>>>" | tr -d '\n' | sed 's/>>>>>$/\n/')
     count=$(echo "$response" | jq -r '.message.items[] | .title? | .[]' | wc -l)
     queryCrossref="no"
     # echo "response: $response"
