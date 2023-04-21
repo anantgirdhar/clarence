@@ -31,7 +31,7 @@ export CONFDIR="$XDG_CONFIG_HOME/clarence"
 [ ! -d "$CONFDIR" ] && echo "Config directory missing." && exit 99
 export RCFILE="$CONFDIR/rc"
 [ ! -f "$RCFILE" ] && echo "Config missing." && exit 99
-source "$RCFILE"
+. "$RCFILE"
 
 # Check that all files are present
 [ ! -d "$RMGR_ROOT" ] && echo "Root directory ($RMGR_ROOT) not a directory." && exit 98

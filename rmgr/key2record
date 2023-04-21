@@ -50,7 +50,7 @@ done
 
 key="$1"
 if [ -z "$key" ]; then
-  [ ! -t 0 ] && key=$(</dev/stdin)
+  [ ! -t 0 ] && key=$(cat /dev/stdin)
   [ -z "$key" ] && PrintUsage && exit 1
 fi
 
@@ -58,14 +58,27 @@ searchResults=$(searchkey "$key")
 exitCode="$?"
 
 if [ "$exitCode" = "0" ] || [ "$exitCode" = "3" ]; then
-  data=$(awk "/^-\s*$key:\s*$/ {flag=1; print "\n"} /^\s*$/ {flag=0} {if(flag) print}" "$DB" | tail -n+2)  # The tail gets rid of the very first newline
+  data=$(awk "/^-[[:space:]]*$key:[[:space:]]*$/ {flag=1; print "\n"} /^\s*$/ {flag=0} {if(flag) print}" "$DB" | tail -n+2)  # The tail gets rid of the very first newline
   if [ "$PRINT" = "summary" ]; then
     # Get the line that has the key
     output=$(echo "$data" | grep "^-")
     # Build up the rest of the string based on whichever keys are requested
-    while read -r -d "," field; do
+    # Peel off each field name from $FIELD_LIST one by one
+    field_list_copy="$FIELD_LIST"
+    # Check if the field list still contains multiple field names
+    # If it has a comma, it still has multiple fields
+    while [ -z "${field_list_copy##*,*}" ]; do
+      # Peel off the first field
+      field="${field_list_copy%%,*}"
+      # Add in the information for that field to the output
       output="$output"$(echo "$data" | awk "/^\s{0,2}-/ {flag=0} /^  -\s*$field\s*:/ {flag=1; print "\n"} {if(flag) print}")
-    done <<< "$FIELD_LIST"
+      # Remove the field from the field list
+      field_list_copy="${field_list_copy#*,}"
+    done
+    # At this point, there should only be one field left in the field list
+    # Add the information for that field to the output
+    field="${field_list_copy}"
+    output="$output"$(echo "$data" | awk "/^\s{0,2}-/ {flag=0} /^  -\s*$field\s*:/ {flag=1; print "\n"} {if(flag) print}")
     echo "$output"
   else
     echo "$data"

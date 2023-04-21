@@ -59,7 +59,7 @@ PreventKeyCollisions() {
       exec 9<>/dev/stdout
       exec 1>/dev/tty
       echo "Key collision. Do any of the following records match?"
-      while IFS=" " read -r matchedKey; do
+      echo "$matchedKeys" | while IFS=" " read -r matchedKey; do
         $APP key2record -s "$matchedKey" | $HIGHLIGHT_YAML
         exec 8<&0
         exec 0</dev/tty
@@ -67,7 +67,7 @@ PreventKeyCollisions() {
         exec 0<&8
         [ -z "$response" ] && response="n"
         [ "$response" = "y" ] && exit 3
-      done <<< "$matchedKeys"
+      done
       # If we get here, the user intends to add this new record to the
       # database. Create a new key (by appending an extra character).
       # Just make sure to reset stdout so that the output can be picked up by

@@ -91,7 +91,7 @@ key="$1"
 
 yaml="$2"
 if [ -z "$yaml" ]; then
-  [ ! -t 0 ] && yaml=$(</dev/stdin)
+  [ ! -t 0 ] && yaml=$(cat /dev/stdin)
   [ -z "$yaml" ] && PrintUsage && exit 1
 fi
 

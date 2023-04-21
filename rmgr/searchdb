@@ -33,7 +33,7 @@ done
 
 searchTerm="$1"
 if [ -z "$searchTerm" ]; then
-  [ ! -t 0 ] && searchTerm=$(</dev/stdin)
+  [ ! -t 0 ] && searchTerm=$(cat /dev/stdin)
   [ -z "$searchTerm" ] && PrintUsage && exit 1
 fi
 

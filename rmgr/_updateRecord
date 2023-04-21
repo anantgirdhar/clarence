@@ -18,7 +18,7 @@ key="$1"
 [ -z "$key" ] && PrintUsage && exit 1
 newRecord="$2"
 if [ -z "$newRecord" ]; then
-  [ ! -t 0 ] && newRecord=$(</dev/stdin)
+  [ ! -t 0 ] && newRecord=$(cat /dev/stdin)
   [ -z "$newRecord" ] && PrintUsage && exit 1
 fi
 

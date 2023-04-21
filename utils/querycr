@@ -45,7 +45,7 @@ exec 1<>/dev/tty
 
 searchTerms="$@"
 if [ -z "$searchTerms" ]; then
-  [ ! -t 0 ] && searchTerms=$(</dev/stdin)
+  [ ! -t 0 ] && searchTerms=$(cat /dev/stdin)
   [ -z "$searchTerms" ] && PrintUsage && exit 1
 fi
 
@@ -71,7 +71,7 @@ while true; do
     # echo "count: $count"
   fi
   # Display the results and ask for a response
-  highlightWords=$(sed 's/%20/|/g' <<< "$searchTerms")
+  highlightWords=$(echo "$searchTerms" | sed 's/%20/|/g')
   # echo "highlight: $highlightWords"
   echo "$response" | jq -r '.message.items[] | .title? | .[]' | nl -v 0 - | grep -i --color -E "^|$highlightWords"
   read -p 'Choose the closest title match [r|q|#]: ' choice

@@ -79,7 +79,7 @@ done
 
 bibjson="$1"
 if [ -z "$bibjson" ]; then
-    [ ! -t 0 ] && bibjson=$(</dev/stdin)
+    [ ! -t 0 ] && bibjson=$(cat /dev/stdin)
     [ -z "$bibjson" ] && PrintUsage && exit 1
 fi
 

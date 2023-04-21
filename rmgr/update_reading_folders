@@ -31,10 +31,10 @@ echo "$readingFoldersList" | while read dir; do
   # Get the documents corresponding to these keys and move them to the
   # appropriate reading folder
   mkdir -p "$READ_DIRS/$dir"
-  while read key; do
+  echo "$keyList" | while read key; do
     entryType=$(key2record "$key" | getyamlval 'type')
     filename=$(echo "$key" | sed 's/-/_/').pdf
     filepath="$DOCS/$entryType/$filename"
     cp "$filepath" "$READ_DIRS/$dir/"
-  done <<< "$keyList"
+  done
 done

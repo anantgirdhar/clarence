@@ -15,7 +15,7 @@ EOF
 
 doi="$1"
 if [ -z "$doi" ]; then
-  [ ! -t 0 ] && doi=$(</dev/stdin)
+  [ ! -t 0 ] && doi=$(cat /dev/stdin)
   [ -z "$doi" ] && PrintUsage && exit 1
 fi
 
