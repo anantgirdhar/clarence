@@ -31,6 +31,8 @@ PRINT="full"
 FIELD_LIST=""
 
 # Parse the options
+# Make sure the field list ends in a comma to make future processing easier
+# This way every field (even the last one) is followed by a comma
 while true; do
   case "$1" in
     "-s")
@@ -66,19 +68,16 @@ if [ "$exitCode" = "0" ] || [ "$exitCode" = "3" ]; then
     # Peel off each field name from $FIELD_LIST one by one
     field_list_copy="$FIELD_LIST"
     # Check if the field list still contains multiple field names
-    # If it has a comma, it still has multiple fields
-    while [ -z "${field_list_copy##*,*}" ]; do
-      # Peel off the first field
+    # Remove everything after the first comma. If there are still some fields
+    # then continue processing.
+    while [ ! -z "${field_list_copy%%,*}" ]; do
+      # Peel off the first field by removing everything after the first comma
       field="${field_list_copy%%,*}"
       # Add in the information for that field to the output
-      output="$output"$(echo "$data" | awk "/^\s{0,2}-/ {flag=0} /^  -\s*$field\s*:/ {flag=1; print "\n"} {if(flag) print}")
+      output="$output"$(echo "$data" | awk "/^[[:space:]]*-/ {flag=0} /^  -[[:space:]]*$field[[:space:]]*:/ {flag=1; print "\n"} {if(flag) print}")
       # Remove the field from the field list
-      field_list_copy="${field_list_copy#*,}"
+      field_list_copy="${field_list_copy#$field,}"
     done
-    # At this point, there should only be one field left in the field list
-    # Add the information for that field to the output
-    field="${field_list_copy}"
-    output="$output"$(echo "$data" | awk "/^\s{0,2}-/ {flag=0} /^  -\s*$field\s*:/ {flag=1; print "\n"} {if(flag) print}")
     echo "$output"
   else
     echo "$data"
