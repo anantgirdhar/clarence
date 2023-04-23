@@ -23,24 +23,21 @@ _EngenderFile() {
   metadata=$($APP key2record "$key")
   if [ -f "$filepath" ]; then
     # Just add the metadata at the top of the file
-    #TODO: Remove this: cp "$filepath" "$filepath".bk
-    cat \
-      <(echo '---') \
-      <(echo "$metadata") \
-      <(echo '...') \
-      <(echo) \
-      "$filepath" \
-      > "$filepath".tmp
+    echo '---' > "$filepath".tmp
+    echo "$metadata" >> "$filepath".tmp
+    echo '...' >> "$filepath".tmp
+    echo >> "$filepath".tmp
+    cat "$filepath" >> "$filepath".tmp
     mv "$filepath".tmp "$filepath"
+    echo "Created $filepath.tmp" >/dev/tty
   else
     # Create the file based on the template
-    cat \
-      <(echo '---') \
-      <(echo "$metadata") \
-      <(echo '...') \
-      <(echo) \
-      "$CONFDIR/notes_template.md" \
-      > "$filepath"
+    echo '---' > "$filepath"
+    echo "$metadata" >> "$filepath"
+    echo '...' >> "$filepath"
+    echo >> "$filepath"
+    cat "$CONFDIR/notes_template.md" >> "$filepath"
+    echo "Created $filepath" >/dev/tty
   fi
 }
 
@@ -64,12 +61,16 @@ _RemoveFileIfEmpty() {
   # Before comparing, remove placeholder tags and all blank lines. This should
   # help check if there is any content in a section or if any headers have been
   # removed.
-  if diff \
-    <(sed 's/<++>// ; /^$/d' "$filepath") \
-    <(sed 's/<++>// ; /^$/d' "$CONFDIR/notes_template.md") \
-    >/dev/null; then
+  if (sed 's/<++>// ; /^$/d' "$filepath" | (
+    sed 's/<++>// ; /^$/d' "$CONFDIR/notes_template.md" | (
+      diff /dev/fd/3 /dev/fd/4 >/dev/null ) 4<&0 ) 3<&0 ); then
+  # if diff \
+  #   <(sed 's/<++>// ; /^$/d' "$filepath") \
+  #   <(sed 's/<++>// ; /^$/d' "$CONFDIR/notes_template.md") \
+  #   >/dev/null; then
     # There are no notes
     # Remove the file
+    echo "removing file because empty" >/dev/tty
     rm "$filepath"
   fi
 }
