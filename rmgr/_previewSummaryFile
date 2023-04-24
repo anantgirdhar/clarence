@@ -3,19 +3,17 @@
 # Preview a summary file
 
 SplitAndPreview() {
-  BATCMD="bat --decorations never --color always"
-  sed -n '/^---$/,/^...$/p' "$1" | $BATCMD -l yaml
-  sed '/^---$/,/^...$/d' "$1" | $BATCMD -l md
+  sed -n '/^---$/,/^...$/p' "$1" | $BAT_YAML
+  sed '/^---$/,/^...$/d' "$1" | $BAT_MD
 }
 
 SearchSplitAndPreview() {
-  BATCMD="bat --decorations never --color always"
   sed -n '/^---$/,/^...$/p' "$1" \
     | grep --ignore-case --color=always -E "$2|$" \
-    | $BATCMD -l yaml
+    | $BAT_YAML
   sed '/^---$/,/^...$/d' "$1" \
     | grep --ignore-case --color=always -E "$2|$" \
-    | $BATCMD -l md
+    | $BAT_MD
 }
 
 ##### MAIN #####

@@ -17,6 +17,9 @@ export DB="$RMGR_ROOT/reflist.yaml"
 # If you don't have highlight installed, just set these options to cat
 export HIGHLIGHT_YAML="highlight --syntax=yaml --out-format=truecolor"
 export HIGHLIGHT_BIBTEX="highlight --syntax=bibtex --out-format=truecolor"
+export BATCMD="bat --decorations never --color always"
+export BAT_YAML="$BATCMD -l yaml"
+export BAT_MD="$BATCMD -l md"
 
 # Programs to use - set these here if you don't have them set elsewhere
 # export EDITOR="vim"
