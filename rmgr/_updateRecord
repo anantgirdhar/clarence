@@ -26,7 +26,7 @@ fi
 oldRecord=$(key2record "$key")
 
 # If they are the same, do nothing
-[ "$oldRecord" == "$newRecord" ] && exit 0
+[ "$oldRecord" = "$newRecord" ] && exit 0
 
 # Otherwise, just update the record
 awk -v new="$newRecord\n" "BEGIN { printed=0 } /^- .+/ { inrecord=0 } /^- $key:/ { inrecord=1 } {if (inrecord==1 && printed==0) { print new; printed=1 } else if (inrecord==0) { print } }" "$DB" > "$DB".new
