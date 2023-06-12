@@ -22,9 +22,9 @@ GetFirstAuthorLastName() {
   INPUT_FORMAT="$1"
   record="$2"
   if [ "$INPUT_FORMAT" = "bibjson" ]; then
-    echo "$record" | jq -r '.author[0].family'
+    echo "$record" | jq -r '.author[0].family' | sed 's/-//g'  # Remove hyphens from the last name
   elif [ "$INPUT_FORMAT" = "yaml" ]; then
-    echo "$record" | getyamlval "firstauthor" "$record" | rev | cut -f 1 -d ' ' | rev
+    echo "$record" | getyamlval "firstauthor" "$record" | rev | cut -f 1 -d ' ' | rev | sed 's/-//g'  # Remove hyphens from the last name
   fi
 }
 
