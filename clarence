@@ -20,6 +20,7 @@ Command list:
 - editnote: Edit a note
 - update_read_dirs: Update reading directories
 - writesummary: Write a summary
+- readsummary: Read a summary as PDF
 - findsummary: Search for a summary
 EOF
 }
@@ -67,6 +68,7 @@ case "$cmd" in
   "genkey") genkey "$@" ;;
   "update_read_dirs") update_reading_folders ;;
   "writesummary") writesummary ;;
+  "readsummary") readsummary ;;
   "findsummary") findsummary;;
   *) PrintUsage && exit 1 ;;
 esac
