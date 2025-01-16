@@ -37,7 +37,7 @@ resultKeysRegex=$( \
   _deflateYaml |\
   fzf \
     --ansi --exact -i --multi \
-    --header="$(printf "^f: Filter  ^r: Refresh\n^u/d: Scroll preview\n?: Reduced preview  ^p: Full preview")" \
+    --header="$(printf "^f: Filter  ^r: Refresh\n^u/d: Scroll preview\n?: Reduced preview  ^p: Full preview\n^a: Select all")" \
     --preview "echo {} | _extractKeyRegex | _extractFullRecords | _inflateYaml | $BAT_YAML" \
     --preview-window=wrap \
     --bind "?:change-preview:echo {} | _inflateYaml | $BAT_YAML" \
@@ -45,6 +45,7 @@ resultKeysRegex=$( \
     --bind 'ctrl-u:preview-up' \
     --bind 'ctrl-d:preview-down' \
     --bind "ctrl-r:select-all+reload(cat {+f} | _extractKeyRegex | _extractFullRecords)+clear-query" \
+    --bind 'ctrl-a:select-all' \
     --bind "ctrl-f:execute(_pickFields > $currentFilters)+select-all+reload(cat {+f} | _extractKeyRegex | _extractFullRecords | _inflateYaml | _extractFields -f $currentFilters | _deflateYaml)+clear-query" |\
   _extractKeyRegex)
 
