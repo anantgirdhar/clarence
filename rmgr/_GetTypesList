@@ -1,7 +1,0 @@
-#!/bin/sh
-
-# Figure out what types can be stored using the names of the scripts that are
-# available. For every type that is allowed, there should be a script name of
-# the form _CatDefaultsFor<Type>.
-
-ls $BASE_CODE_PATH/rmgr/_CatDefaultsFor* | sed 's/^.*_CatDefaultsFor//' | tr '[:upper:]' '[:lower:]'

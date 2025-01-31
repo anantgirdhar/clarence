@@ -1,9 +1,0 @@
-#!/bin/sh
-
-cat /dev/stdin |\
-  grep -v '^\s*$' |\
-  sed -E 's/$/~~/' |\
-  sed -E 's/^-/~~~-/' |\
-  tr -d '\n' |\
-  sed 's/~~~~~/~~\n/g' |\
-  sed -E 's/^~~~?-/-/'

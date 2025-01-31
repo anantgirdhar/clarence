@@ -1,9 +1,0 @@
-#!/bin/sh
-
-cat /dev/stdin |\
-  _inflateYaml |\
-  grep -E '^-' |\
-  sed -E 's/- (.+):/\1/' |\
-  sed -E 's/$/|/' |\
-  tr -d '\n' |\
-  sed 's/|$//'
