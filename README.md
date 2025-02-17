@@ -1,44 +1,17 @@
 # clarence (Command Line Academic ReferENCE manager)
 
-A simple tool to manage a reading list / academic references offline.
+A simple tool to manage a reading list / academic references offline and
+through the command line.
 
-## Dependencies
+I have three goals for this project:
 
-- sed
-- awk
-- cut
-- jq
-- nl (to number lines and present menus)
-- curl (to query crossref)
-- iconv (to remove diacritics from entry keys)
-- pdfinfo
-- pdftotext
-- fzf
-- bat (for syntax highlighting)
-- pandoc-citeproc
+1. Make the previous version more robust
+2. Learn rust
+3. Create something that I will enjoy using with a few additional features and
+   tweaks as compared to the previous version
 
-## Installation
-
-Run
-
-    sudo make install
-
-If you want to run without sudo, change the PREFIX variable in the Makefile to
-somewhere your user can write to.
-
-Alternatively, copy the scripts to somewhere in your `$PATH`.
-
-## Configuration
-
-The configuration file needs to be placed at `$XDG_CONFIG_HOME/clarence/rc`.
-The paths in this file can be customized according to your setup. A sample
-config file is provided in the source folder (sample_config).
-
-## Inserting Citations
-
-If you want to be able to cite while writing in vim (that's what I work with),
-you can call clarence's fuzzy search feature within vim to pick the citations
-you'd like to insert. To help with note taking in markdown,
-`editor/markdown.vim` file has been provided. Either put the contents of this
-file into your `.vimrc` or place the file in your vim configuration at
-`vim/after/ftplugin/`.
+A word of caution: This is the first piece of code that I've ever tried to
+write in rust (other than a few examples from the rust book) so the code is
+probably not the most rust way of doing things and/or probably not the best way
+of doing things. Hopefully, as I learn more, I can keep refactoring this to be
+better / more rusty(?).
