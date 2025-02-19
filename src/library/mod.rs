@@ -1,11 +1,12 @@
 use crate::{Error, Result};
 use deunicode::deunicode;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+pub mod catalog;
+use crate::library::catalog::Catalog;
 pub mod entry;
 use crate::library::entry::BibEntry;
 
@@ -21,7 +22,7 @@ pub struct Config {
 
 #[derive(Debug)]
 pub struct Library {
-    entries: HashMap<String, BibEntry>,
+    entries: Catalog,
     config: Config,
 }
 
@@ -29,7 +30,7 @@ impl Library {
     pub fn new() -> Self {
         // TODO: Load the paths from some config
         Library {
-            entries: HashMap::new(),
+            entries: Catalog::new(),
             config: Config {
                 db: PathBuf::from("./testlib/db.toml"),
                 docs: PathBuf::from("./testlib/docs"),
